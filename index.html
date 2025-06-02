@@ -320,32 +320,18 @@
           <div id="codOptions" class="mb-5">
             <h4 class="text-sm font-medium text-gray-300 mb-4">Chain of Draft Configuration:</h4>
             
-            <!-- Number of CoD Steps Slider -->
+            <!-- CoD Word Limit per Step -->
             <div class="bg-dark-600 border border-dark-500 rounded-lg p-4 mb-4">
               <div class="flex justify-between items-center mb-3">
-                <label for="codSteps" class="block text-sm font-medium text-gray-300">Number of CoD Steps</label>
-                <span id="codStepsValue" class="text-sm text-primary-400 font-medium">10</span>
-              </div>
-              <input type="range" id="codSteps" min="5" max="20" step="1" value="10" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-              <div class="flex justify-between text-xs text-gray-500 mt-1">
-                <span>5 (Very Concise)</span>
-                <span>20 (More Detailed)</span>
-              </div>
-              <p class="text-xs text-gray-400 mt-2">Controls how many ultra-concise reasoning steps the model will use. Each step is limited to ≤5 words.</p>
-            </div>
-
-            <!-- CoD Step Length -->
-            <div class="bg-dark-600 border border-dark-500 rounded-lg p-4 mb-4">
-              <div class="flex justify-between items-center mb-3">
-                <label for="codWordLimit" class="block text-sm font-medium text-gray-300">Max Words per Step</label>
+                <label for="codWordLimit" class="block text-sm font-medium text-gray-300">Max Words per CoD Step</label>
                 <span id="codWordLimitValue" class="text-sm text-primary-400 font-medium">5</span>
               </div>
-              <input type="range" id="codWordLimit" min="3" max="8" step="1" value="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
+              <input type="range" id="codWordLimit" min="5" max="20" step="1" value="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
               <div class="flex justify-between text-xs text-gray-500 mt-1">
-                <span>3 (Ultra-minimal)</span>
-                <span>8 (Slightly verbose)</span>
+                <span>5 (Research Default)</span>
+                <span>20 (More Verbose)</span>
               </div>
-              <p class="text-xs text-gray-400 mt-2">Research shows 5 words per step is optimal. Reducing below 5 may hurt comprehension.</p>
+              <p class="text-xs text-gray-400 mt-2">Research shows 5 words per step is optimal. Each reasoning step is strictly limited to this word count.</p>
             </div>
 
             <div class="bg-dark-700 rounded-lg p-4">
@@ -353,16 +339,16 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                True Chain of Draft (Based on Research Paper)
+                True Chain of Draft (Zoom Communications Research)
               </div>
               <div class="text-gray-400 text-xs">
-                <p>Chain of Draft reduces verbosity by 68-92% compared to Chain of Thought:</p>
+                <p>Based on "Chain of Draft: Thinking Faster by Writing Less" research paper:</p>
                 <ul class="list-disc list-inside mt-2 space-y-1">
-                  <li>Each step limited to ≤5 words (vs 50+ words in CoT)</li>
-                  <li>Focus on essential information only</li>
-                  <li>Use mathematical notation and shorthand</li>
-                  <li>Inspired by human problem-solving behavior</li>
-                  <li>Maintains or improves accuracy while using fewer tokens</li>
+                  <li>Each reasoning step limited to specified word count (default: 5 words)</li>
+                  <li>Uses 68-92% fewer tokens than Chain of Thought</li>
+                  <li>Maintains or improves accuracy while reducing latency</li>
+                  <li>Inspired by human problem-solving: jot down essential info only</li>
+                  <li>Example: "20 - x = 12" then "x = 8" then "#### 8"</li>
                 </ul>
               </div>
             </div>
@@ -504,7 +490,6 @@
     };
 
     let REASONING_METHOD = "cod";
-    let COD_STEPS = 10;
     let COD_WORD_LIMIT = 5;
     
     let TEMPERATURE = 0.6;
@@ -608,7 +593,7 @@
       
       let content = `AI Reasoning Studio - ${REASONING_METHOD.toUpperCase()}`;
       if (REASONING_METHOD === "cod") { 
-        content += ` (${COD_STEPS} steps, ≤${COD_WORD_LIMIT} words/step)`; 
+        content += ` (≤${COD_WORD_LIMIT} words/step)`; 
       }
       content += `\nModel: ${FIREWORKS_MODEL}\n\n`;
       
@@ -792,15 +777,15 @@
         let html = '';
         let codStepCounter = 1;
         
-        // Split by periods and process each sentence as a CoD step
-        let steps = cleanedThinking.split('.').filter(step => step.trim().length > 0);
+        // Split by line breaks to capture each CoD step
+        let steps = cleanedThinking.split(/[\n.;]/).filter(step => step.trim().length > 0);
         
         steps.forEach(step => {
           let stepContent = step.trim();
           if (stepContent) {
-            html += `<div class="flex items-start p-2 mb-1 rounded-lg bg-emerald-800/20 border-l-4 border-emerald-500 thinking-step">
-                       <span class="flex items-center justify-center min-w-6 h-6 mr-2 rounded-full bg-emerald-700/50 text-emerald-300 text-xs font-bold step-number">${codStepCounter++}</span>
-                       <span class="step-content font-mono text-sm text-emerald-200">${stepContent}.</span>
+            html += `<div class="flex items-start p-2 mb-1 rounded-lg bg-emerald-800/20 border-l-2 border-emerald-500 thinking-step">
+                       <span class="flex items-center justify-center min-w-6 h-6 mr-2 rounded bg-emerald-700/50 text-emerald-300 text-xs font-mono">${codStepCounter++}</span>
+                       <span class="step-content font-mono text-sm text-emerald-200 font-medium">${stepContent}</span>
                      </div>`;
           }
         });
@@ -871,7 +856,7 @@
               thinkingLabel.className = "text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3 pb-2 border-b border-dark-500 flex items-center gap-2";
               thinkingLabel.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>Chain of Draft - Ultra-Concise Reasoning`;
+              </svg>Chain of Draft - Minimal Reasoning (≤${COD_WORD_LIMIT} words/step)`;
               thinkingContainer.appendChild(thinkingLabel);
               
               const thinkingContentDiv = document.createElement("div");
@@ -1434,29 +1419,8 @@
     }
 
     function updateCoDPrompt() {
-      // True Chain of Draft prompt based on the research paper
-      let basePrompt = `You are an AI assistant that uses Chain of Draft (CoD) reasoning, based on the research by Zoom Communications.
-
-When solving problems, think step-by-step using the Chain of Draft methodology:
-
-1. **Ultra-Concise Steps**: Each reasoning step must be ≤${COD_WORD_LIMIT} words. Use mathematical notation, shorthand, and essential information only.
-2. **Target ${COD_STEPS} steps**: Aim to use approximately ${COD_STEPS} reasoning steps to solve the problem.
-3. **Minimize verbosity**: Focus on critical insights only, inspired by how humans jot down brief notes when solving problems.
-
-Structure your response as follows:
-- First, provide your concise reasoning steps (≤${COD_WORD_LIMIT} words each)
-- Then write "####" on a new line
-- Finally, provide a complete, detailed answer explaining your solution
-
-Example Chain of Draft steps:
-• Initial value: 20 items
-• Items given away: unknown
-• Remaining: 12 items  
-• Given away = 20 - 12 = 8
-
-Each step should capture only essential progress toward the solution, using mathematical notation where possible.`;
-
-      PROMPTS.cod = basePrompt;
+      // Exact Chain of Draft prompt from the research paper
+      PROMPTS.cod = `Think step by step, but only keep a minimum draft for each thinking step, with ${COD_WORD_LIMIT} words at most. Return the answer at the end of the response after a separator ####.`;
     }
     
     function setupMcpToolsOptions() {
@@ -1496,11 +1460,8 @@ Each step should capture only essential progress toward the solution, using math
             valueDisplay.textContent = slider.value; 
             updateRangeColor(slider); 
             
-            // Update CoD-specific settings
-            if (slider.id === 'codSteps') {
-              COD_STEPS = parseInt(slider.value);
-              updateCoDPrompt();
-            } else if (slider.id === 'codWordLimit') {
+            // Update CoD word limit setting
+            if (slider.id === 'codWordLimit') {
               COD_WORD_LIMIT = parseInt(slider.value);
               updateCoDPrompt();
             }
@@ -1527,7 +1488,6 @@ Each step should capture only essential progress toward the solution, using math
       setSliderAndValue("maxTokens", MAX_TOKENS); 
       setSliderAndValue("presencePenalty", PRESENCE_PENALTY); 
       setSliderAndValue("frequencyPenalty", FREQUENCY_PENALTY);
-      setSliderAndValue("codSteps", COD_STEPS);
       setSliderAndValue("codWordLimit", COD_WORD_LIMIT);
       
       setupCODOptionsDisplay(); 
@@ -1597,7 +1557,6 @@ Each step should capture only essential progress toward the solution, using math
       PRESENCE_PENALTY = parseFloat(document.getElementById("presencePenalty").value); 
       FREQUENCY_PENALTY = parseFloat(document.getElementById("frequencyPenalty").value); 
       MAX_TOKENS = parseInt(document.getElementById("maxTokens").value);
-      COD_STEPS = parseInt(document.getElementById("codSteps").value);
       COD_WORD_LIMIT = parseInt(document.getElementById("codWordLimit").value);
       
       ENABLED_MCP_TOOLS = []; 
@@ -1618,7 +1577,6 @@ Each step should capture only essential progress toward the solution, using math
       localStorage.setItem("presencePenalty", PRESENCE_PENALTY.toString()); 
       localStorage.setItem("frequencyPenalty", FREQUENCY_PENALTY.toString()); 
       localStorage.setItem("maxTokens", MAX_TOKENS.toString()); 
-      localStorage.setItem("codSteps", COD_STEPS.toString());
       localStorage.setItem("codWordLimit", COD_WORD_LIMIT.toString());
       localStorage.setItem("enabledMcpTools", JSON.stringify(ENABLED_MCP_TOOLS)); 
       localStorage.setItem("enableWebSearchQuickToggle", enableWebSearchQuickToggle.toString());
@@ -1722,13 +1680,6 @@ Each step should capture only essential progress toward the solution, using math
         MAX_TOKENS = parseInt(maxTokens); 
       } else {
         MAX_TOKENS = 8192;
-      }
-
-      const codSteps = localStorage.getItem("codSteps");
-      if (codSteps) {
-        COD_STEPS = parseInt(codSteps);
-      } else {
-        COD_STEPS = 10;
       }
 
       const codWordLimit = localStorage.getItem("codWordLimit");
