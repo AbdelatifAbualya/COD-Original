@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Reasoning Studio (Qwen3-235B)</title>
+  <title>Enhanced AI Reasoning Studio (Chain of Draft)</title>
   
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -89,28 +89,39 @@
       background: rgba(86, 134, 245, 0.8);
     }
 
-    /* Thinking Steps Animation */
+    /* Enhanced Animation Styles */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    .thinking-steps {
-      animation: fadeIn 0.3s ease;
-    }
-    .thinking-step, .detailed-reflection-step, .reflection-step {
-      animation: fadeIn 0.3s ease;
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
     }
     
-    /* Reflection Step Animation */
-    @keyframes reflectionPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
     
-    .reflection-step .step-number {
-      animation: reflectionPulse 2s infinite;
+    @keyframes codPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    
+    .cod-response {
+      animation: fadeIn 0.5s ease;
+      border-left: 4px solid #22c55e;
+    }
+    
+    .cod-step {
+      animation: slideInLeft 0.3s ease;
+    }
+    
+    .cod-draft {
+      animation: codPulse 2s infinite;
     }
     
     /* Streaming Indicator Animation */
@@ -157,6 +168,18 @@
       border: 1px solid rgba(0, 0, 0, 0.1) !important;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       margin-top: -6px;
+    }
+
+    /* Progress bar for CoD steps */
+    .progress-bar {
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Efficiency badge */
+    .efficiency-badge {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      animation: pulse 2s infinite;
     }
   </style>
 </head>
@@ -222,10 +245,10 @@
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
       <header class="bg-dark-700 border-b border-dark-600 h-16 flex items-center justify-between px-4 md:px-6">
-        <h1 id="pageTitle" class="text-xl font-semibold">AI Reasoning Studio (Qwen3-235B)</h1>
+        <h1 id="pageTitle" class="text-xl font-semibold">Enhanced AI Reasoning Studio (Chain of Draft)</h1>
         <div class="flex items-center gap-3">
           <div id="currentModelDisplay" class="bg-dark-600 text-sm px-3 py-1.5 rounded-lg flex items-center">
-            <span>Qwen3-235B (Fireworks AI)</span>
+            <span>Qwen3-235B (True CoD)</span>
           </div>
           <button id="openSettings" class="flex items-center gap-1.5 bg-dark-600 hover:bg-dark-500 text-gray-300 px-3 py-1.5 rounded-lg transition">
             <span>Settings</span>
@@ -244,7 +267,7 @@
       <div class="p-4 border-t border-dark-600 bg-dark-700">
         <div class="flex items-start gap-3 rounded-xl bg-dark-600 p-3 shadow-lg border border-dark-500 focus-within:border-primary-500 transition">
           <div class="flex-1">
-            <textarea id="userInput" rows="1" class="w-full bg-dark-700 text-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-base" placeholder="Type your message..."></textarea>
+            <textarea id="userInput" rows="1" class="w-full bg-dark-700 text-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-base" placeholder="Type your math, code, or logic problem..."></textarea>
           </div>
           <div class="flex flex-col gap-2 mt-1">
             <button id="sendBtn" class="bg-primary-500 hover:bg-primary-600 text-white p-3 rounded-lg transition">
@@ -275,9 +298,9 @@
 
   <!-- Settings Modal -->
   <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-    <div class="bg-dark-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="bg-dark-700 rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
       <div class="p-5 border-b border-dark-600 flex justify-between items-center">
-        <h2 class="text-xl font-semibold">Settings</h2>
+        <h2 class="text-xl font-semibold">Chain of Draft Settings</h2>
         <button id="closeModalX" class="text-gray-400 hover:text-white">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -288,69 +311,105 @@
       <div class="p-5">
         <!-- Tab Navigation -->
         <div class="bg-dark-600 rounded-lg p-1 flex mb-5">
-          <button class="tab-btn flex-1 py-2 px-4 rounded-md text-white bg-primary-500" data-tab="reasoningTab">Reasoning</button>
+          <button class="tab-btn flex-1 py-2 px-4 rounded-md text-white bg-primary-500" data-tab="reasoningTab">CoD Config</button>
           <button class="tab-btn flex-1 py-2 px-4 rounded-md text-gray-400 transition" data-tab="parametersTab">Parameters</button>
           <button class="tab-btn flex-1 py-2 px-4 rounded-md text-gray-400 transition" data-tab="toolsTab">Tools</button>
         </div>
         
-        <!-- Reasoning Tab Content -->
+        <!-- CoD Configuration Tab -->
         <div id="reasoningTab" class="tab-content">
-          <h3 class="text-lg font-medium mb-4 pb-2 border-b border-dark-600">Reasoning Method</h3>
+          <h3 class="text-lg font-medium mb-4 pb-2 border-b border-dark-600">Chain of Draft Configuration</h3>
           
+          <!-- Research Paper Information -->
+          <div class="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-700/30 rounded-lg p-4 mb-5">
+            <h4 class="text-sm font-medium text-green-300 mb-3 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              Research-Based Implementation (Zoom Communications)
+            </h4>
+            <div class="text-sm text-green-100 space-y-2">
+              <p><strong>Key Finding:</strong> CoD achieves up to 92.4% token reduction while maintaining accuracy</p>
+              <p><strong>Method:</strong> Limit each reasoning step to 5 words maximum</p>
+              <p><strong>Performance:</strong> GSM8k: 91.4% accuracy with 80% fewer tokens vs CoT</p>
+            </div>
+          </div>
+          
+          <!-- CoD Mode Toggle -->
+          <div class="flex items-center justify-between mb-5 bg-dark-600 rounded-lg p-3 border border-dark-500">
+            <label for="codModeToggle" class="flex items-center cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              <div>
+                <div class="font-medium text-sm">Enable Chain of Draft</div>
+                <div class="text-gray-400 text-xs mt-0.5">Use research-based CoD prompting for complex problems</div>
+              </div>
+            </label>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="codModeToggle" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-dark-500 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+            </label>
+          </div>
+          
+          <!-- CoD Words Per Step Slider -->
+          <div class="mb-5">
+            <div class="flex justify-between items-center mb-2">
+              <label for="codWordsPerStep" class="block text-sm font-medium text-gray-300">CoD Words Per Step</label>
+              <span id="codWordsPerStepValue" class="text-sm text-green-400 font-semibold">5</span>
+            </div>
+            <input type="range" id="codWordsPerStep" min="3" max="8" step="1" value="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>3 words (Ultra concise)</span>
+              <span>5 words (Research optimal)</span>
+              <span>8 words (More detail)</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Based on Zoom research: 5 words achieves optimal token reduction</p>
+          </div>
+          
+          <!-- Problem Detection -->
           <div class="bg-dark-600 border border-dark-500 rounded-lg p-4 mb-5">
+            <h4 class="text-sm font-medium text-gray-300 mb-3">Auto Problem Detection</h4>
             <div class="space-y-3">
               <div class="flex items-start">
-                <input type="radio" id="standardReasoning" name="reasoningMethod" value="standard" class="w-4 h-4 mt-1 text-primary-500 bg-dark-500 border-dark-400 focus:ring-primary-500 focus:ring-offset-dark-700">
-                <label for="standardReasoning" class="ml-3 block text-sm font-medium text-white">
-                  Standard (No special prompt)
-                  <div class="text-gray-400 text-xs mt-1">Default model behavior with no special reasoning instructions.</div>
-                </label>
-              </div>
-              
-              <div class="flex items-start">
-                <input type="radio" id="codReasoning" name="reasoningMethod" value="cod" checked class="w-4 h-4 mt-1 text-primary-500 bg-dark-500 border-dark-400 focus:ring-primary-500 focus:ring-offset-dark-700">
-                <label for="codReasoning" class="ml-3 block text-sm font-medium text-white">
-                  Chain of Draft (CoD) - Minimalist Reasoning
-                  <div class="text-gray-400 text-xs mt-1">Uses ultra-concise steps (≤5 words each) based on the Zoom Communications research paper. Reduces token usage by 68-92%.</div>
+                <input type="checkbox" id="enableProblemDetection" checked class="w-4 h-4 mt-1 text-green-500 bg-dark-500 border-dark-400 focus:ring-green-500 focus:ring-offset-dark-700">
+                <label for="enableProblemDetection" class="ml-3 block text-sm text-white">
+                  Auto-detect complex problems
+                  <div class="text-gray-400 text-xs mt-1">Automatically apply CoD to math, logic, and coding problems</div>
                 </label>
               </div>
             </div>
           </div>
           
-          <div id="codOptions" class="mb-5">
-            <h4 class="text-sm font-medium text-gray-300 mb-4">Chain of Draft Configuration:</h4>
-            
-            <!-- CoD Word Limit per Step -->
-            <div class="bg-dark-600 border border-dark-500 rounded-lg p-4 mb-4">
-              <div class="flex justify-between items-center mb-3">
-                <label for="codWordLimit" class="block text-sm font-medium text-gray-300">Max Words per CoD Step</label>
-                <span id="codWordLimitValue" class="text-sm text-primary-400 font-medium">5</span>
-              </div>
-              <input type="range" id="codWordLimit" min="5" max="20" step="1" value="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-              <div class="flex justify-between text-xs text-gray-500 mt-1">
-                <span>5 (Research Default)</span>
-                <span>20 (More Verbose)</span>
-              </div>
-              <p class="text-xs text-gray-400 mt-2">Research shows 5 words per step is optimal. Each reasoning step is strictly limited to this word count.</p>
+          <!-- CoD Methodology -->
+          <div class="bg-dark-700 rounded-lg p-4 mt-6">
+            <div class="flex items-center text-green-300 text-sm font-medium mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              True Chain of Draft Methodology
             </div>
-
-            <div class="bg-dark-700 rounded-lg p-4">
-              <div class="flex items-center text-purple-300 text-sm font-medium mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                True Chain of Draft (Zoom Communications Research)
+            <div class="text-gray-400 text-xs space-y-2">
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                <span><strong>Concise Steps:</strong> Each reasoning step ≤5 words</span>
               </div>
-              <div class="text-gray-400 text-xs">
-                <p>Based on "Chain of Draft: Thinking Faster by Writing Less" research paper:</p>
-                <ul class="list-disc list-inside mt-2 space-y-1">
-                  <li>Each reasoning step limited to specified word count (default: 5 words)</li>
-                  <li>Uses 68-92% fewer tokens than Chain of Thought</li>
-                  <li>Maintains or improves accuracy while reducing latency</li>
-                  <li>Inspired by human problem-solving: jot down essential info only</li>
-                  <li>Example: "20 - x = 12" then "x = 8" then "#### 8"</li>
-                </ul>
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                <span><strong>Essential Logic:</strong> Only critical reasoning elements</span>
               </div>
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                <span><strong>Math Notation:</strong> Use symbols, equations, shorthand</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-xs font-bold">4</div>
+                <span><strong>Clear Answer:</strong> Final result after #### separator</span>
+              </div>
+            </div>
+            <div class="mt-3 p-3 bg-gray-800/50 rounded text-xs">
+              <strong>Example:</strong> "20 - x = 12" → "x = 8" → "#### 8"<br>
+              <em>CoD eliminates verbose explanations while maintaining logical clarity</em>
             </div>
           </div>
         </div>
@@ -366,7 +425,7 @@
               </svg>
               <div>
                 <div class="font-medium text-sm">Enable Streaming Responses</div>
-                <div class="text-gray-400 text-xs mt-0.5">See responses appear in real-time as they're generated</div>
+                <div class="text-gray-400 text-xs mt-0.5">See CoD reasoning appear in real-time</div>
               </div>
             </label>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -378,19 +437,19 @@
           <div class="mb-4">
             <div class="flex justify-between items-center mb-2">
               <label for="temp" class="block text-sm font-medium text-gray-300">Temperature</label>
-              <span id="tempValue" class="text-sm text-gray-400">0.6</span>
+              <span id="tempValue" class="text-sm text-gray-400">0.3</span>
             </div>
-            <input type="range" id="temp" min="0" max="2" step="0.01" value="0.6" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-            <p class="text-xs text-gray-500 mt-1">Controls randomness: lower values make responses more focused. (Fireworks default: 0.6)</p>
+            <input type="range" id="temp" min="0" max="1" step="0.01" value="0.3" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
+            <p class="text-xs text-gray-500 mt-1">Lower for more focused CoD reasoning.</p>
           </div>
           
           <div class="mb-4">
             <div class="flex justify-between items-center mb-2">
               <label for="topP" class="block text-sm font-medium text-gray-300">Top P</label>
-              <span id="topPValue" class="text-sm text-gray-400">1</span>
+              <span id="topPValue" class="text-sm text-gray-400">0.9</span>
             </div>
-            <input type="range" id="topP" min="0" max="1" step="0.01" value="1" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-            <p class="text-xs text-gray-500 mt-1">Controls diversity via nucleus sampling. (Fireworks default: 1)</p>
+            <input type="range" id="topP" min="0" max="1" step="0.01" value="0.9" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
+            <p class="text-xs text-gray-500 mt-1">Controls diversity via nucleus sampling.</p>
           </div>
 
           <div class="mb-4">
@@ -399,68 +458,31 @@
               <span id="topKValue" class="text-sm text-gray-400">40</span>
             </div>
             <input type="range" id="topK" min="0" max="100" step="1" value="40" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-            <p class="text-xs text-gray-500 mt-1">Restricts selection to the K most likely tokens. (Fireworks default: 40, 0 means disabled)</p>
-          </div>
-          
-          <div class="mb-4">
-            <div class="flex justify-between items-center mb-2">
-              <label for="presencePenalty" class="block text-sm font-medium text-gray-300">Presence Penalty</label>
-              <span id="presencePenaltyValue" class="text-sm text-gray-400">0</span>
-            </div>
-            <input type="range" id="presencePenalty" min="-2" max="2" step="0.01" value="0" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-            <p class="text-xs text-gray-500 mt-1">Reduces repetition of similar tokens.</p>
-          </div>
-          
-          <div class="mb-4">
-            <div class="flex justify-between items-center mb-2">
-              <label for="frequencyPenalty" class="block text-sm font-medium text-gray-300">Frequency Penalty</label>
-              <span id="frequencyPenaltyValue" class="text-sm text-gray-400">0</span>
-            </div>
-            <input type="range" id="frequencyPenalty" min="-2" max="2" step="0.01" value="0" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-            <p class="text-xs text-gray-500 mt-1">Reduces repetition based on frequency.</p>
+            <p class="text-xs text-gray-500 mt-1">Restricts selection to the K most likely tokens.</p>
           </div>
           
           <div class="mb-4">
             <div class="flex justify-between items-center mb-2">
               <label for="maxTokens" class="block text-sm font-medium text-gray-300">Max Tokens</label>
-              <span id="maxTokensValue" class="text-sm text-gray-400">8192</span>
+              <span id="maxTokensValue" class="text-sm text-gray-400">2000</span>
             </div>
-            <input type="range" id="maxTokens" min="1" max="16384" step="128" value="8192" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
-            <p class="text-xs text-gray-500 mt-1">Maximum length of the response. (Qwen3-235B context is larger, but completions are often capped)</p>
+            <input type="range" id="maxTokens" min="512" max="8192" step="128" value="2000" class="w-full h-2 rounded-lg appearance-none cursor-pointer">
+            <p class="text-xs text-gray-500 mt-1">Reduced for CoD efficiency - most problems solved in under 1000 tokens.</p>
           </div>
         </div>
         
         <!-- Tools Tab Content -->
         <div id="toolsTab" class="tab-content hidden">
-          <h3 class="text-lg font-medium mb-4 pb-2 border-b border-dark-600">Available MCP Tools</h3>
+          <h3 class="text-lg font-medium mb-4 pb-2 border-b border-dark-600">Available Tools</h3>
           
           <div class="space-y-4">
             <div class="bg-dark-600 border border-dark-500 rounded-lg p-4">
               <div class="flex items-start">
-                <input type="checkbox" id="tavilySearchTool" name="mcp_tools" value="tavily_search" class="w-4 h-4 mt-1 text-primary-500 bg-dark-500 border-dark-400 focus:ring-primary-500 focus:ring-offset-dark-700">
+                <input type="checkbox" id="tavilySearchTool" name="tools" value="tavily_search" class="w-4 h-4 mt-1 text-primary-500 bg-dark-500 border-dark-400 focus:ring-primary-500 focus:ring-offset-dark-700">
                 <label for="tavilySearchTool" class="ml-3 block text-sm font-medium text-white">
                   Enable Tavily Web Search
-                  <div class="text-gray-400 text-xs mt-1">Allows the model to request web searches via Tavily for up-to-date information.</div>
+                  <div class="text-gray-400 text-xs mt-1">Access current information for CoD reasoning</div>
                 </label>
-              </div>
-            </div>
-            
-            <div class="bg-dark-700 rounded-lg p-4 mt-6">
-              <div class="flex items-center text-blue-300 text-sm font-medium mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                About MCP Tools
-              </div>
-              <div class="text-gray-400 text-xs">
-                <p>Model Context Protocol (MCP) tools extend the model's capabilities by allowing it to request actions like:</p>
-                <ul class="list-disc list-inside mt-2 space-y-1">
-                  <li>Accessing real-time information from the web (e.g., via Tavily).</li>
-                  <li>Performing precise calculations (future).</li>
-                  <li>Using external systems to retrieve data (future).</li>
-                </ul>
-                <p class="mt-2">Select which tools you want to make available to the model. The model will then decide if and when to use them by outputting a structured request.</p>
-                <p class="mt-2 italic">Note: For this local test version, actual external API calls for tools (like to Tavily) are not performed by the browser. The UI will show if the model requests a tool.</p>
               </div>
             </div>
           </div>
@@ -484,26 +506,57 @@
      ***********************/
     const FIREWORKS_MODEL = "accounts/fireworks/models/qwen3-235b-a22b";
 
-    let PROMPTS = {
-      standard: "",
-      cod: ""
-    };
-
-    let REASONING_METHOD = "cod";
-    let COD_WORD_LIMIT = 5;
+    // Fixed CoD Configuration
+    let COD_WORDS_PER_STEP = 5; // Research optimal: 5 words
+    let ENABLE_COD_MODE = true;
+    let ENABLE_PROBLEM_DETECTION = true;
     
-    let TEMPERATURE = 0.6;
-    let TOP_P = 1;
+    let TEMPERATURE = 0.3; // Lower for focused reasoning
+    let TOP_P = 0.9;
     let TOP_K = 40;
-    let MAX_TOKENS = 8192;
-    let PRESENCE_PENALTY = 0;
-    let FREQUENCY_PENALTY = 0;
+    let MAX_TOKENS = 2000; // Reduced for CoD efficiency
     let ENABLE_STREAMING = true;
-    let ENABLED_MCP_TOOLS = [];
-    let enableWebSearchQuickToggle = false; 
+    let ENABLED_TOOLS = [];
+    let enableWebSearchQuickToggle = false;
     
     /***********************
-     * Thread Management
+     * TRUE COD PROMPT (Research-Based & Minimal)
+     ***********************/
+    function generateTrueCoDPrompt() {
+      // This is the actual CoD prompt from the research paper
+      return `Think step by step, but only keep a minimum draft for each thinking step, with ${COD_WORDS_PER_STEP} words at most. Return the answer at the end of the response after a separator ####.`;
+    }
+    
+    /***********************
+     * Problem Detection
+     ***********************/
+    function isComplexProblem(userMessage) {
+      if (!ENABLE_PROBLEM_DETECTION || !ENABLE_COD_MODE) return false;
+      
+      const complexPatterns = [
+        // Math indicators
+        /\b(solve|calculate|compute|find|determine)\b.*\b(equation|formula|problem)\b/i,
+        /\b(algebra|calculus|geometry|arithmetic|math)\b/i,
+        /\d+.*[\+\-\*\/\^].*\d+/,
+        /\b(proof|theorem|derivative|integral)\b/i,
+        
+        // Logic and reasoning
+        /\b(logic|reasoning|proof|if.*then|implies)\b/i,
+        /\b(step by step|multi[- ]?step|complex)\b/i,
+        
+        // Coding problems
+        /\b(algorithm|function|code|program|debug)\b/i,
+        /\b(complexity|optimize|efficient)\b/i,
+        
+        // Word problems
+        /\b(how many|how much|what is|find the)\b.*\b(total|difference|ratio|percentage)\b/i
+      ];
+      
+      return complexPatterns.some(pattern => pattern.test(userMessage));
+    }
+    
+    /***********************
+     * Thread Management (Keep your original)
      ***********************/
     let threads = [];
     let currentThreadId = null;
@@ -591,11 +644,7 @@
         return; 
       }
       
-      let content = `AI Reasoning Studio - ${REASONING_METHOD.toUpperCase()}`;
-      if (REASONING_METHOD === "cod") { 
-        content += ` (≤${COD_WORD_LIMIT} words/step)`; 
-      }
-      content += `\nModel: ${FIREWORKS_MODEL}\n\n`;
+      let content = `Chain of Draft AI Reasoning Studio\nCoD Words Per Step: ${COD_WORDS_PER_STEP}\nModel: ${FIREWORKS_MODEL}\n\n`;
       
       thread.messages.forEach(msg => {
         if (msg.isPlaceholder) return;
@@ -604,23 +653,18 @@
         
         if (msg.sender === 'bot' && !msg.isPlaceholder && !msg.isStreaming) {
           if (msg.wordCount !== undefined) {
-            content += `(Words: ${msg.wordCount}`;
-            if (msg.thinkingWordCount !== undefined && msg.answerWordCount !== undefined) {
-              content += ` [Think: ${msg.thinkingWordCount}, Ans: ${msg.answerWordCount}]`;
-            }
-            content += ")\n";
+            content += `(Words: ${msg.wordCount})`;
           }
           if (msg.totalTokens !== undefined) {
-            content += `(Tokens: ${msg.totalTokens}`;
-            if (msg.promptTokens !== undefined && msg.completionTokens !== undefined) {
-              content += ` [Prompt: ${msg.promptTokens}, Completion: ${msg.completionTokens}]`;
-            }
-            content += ")\n";
+            content += ` (Tokens: ${msg.totalTokens})`;
           }
           if (msg.durationSeconds !== undefined) {
-            content += `(Time: ${msg.durationSeconds}s)\n`;
+            content += ` (Time: ${msg.durationSeconds}s)`;
           }
-          content += "\n";
+          if (msg.isCoD) {
+            content += ` (CoD: ≤${COD_WORDS_PER_STEP} words/step)`;
+          }
+          content += "\n\n";
         }
       });
       
@@ -628,7 +672,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${thread.name || "Thread"}.txt`;
+      a.download = `${thread.name || "Thread"}_CoD.txt`;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
@@ -636,7 +680,7 @@
         document.body.removeChild(a); 
         URL.revokeObjectURL(url); 
       }, 100);
-      showNotification("TXT file downloaded");
+      showNotification("CoD conversation downloaded");
     }
     
     function showNotification(message, duration = 3000) {
@@ -745,54 +789,48 @@
       return processedText.split(/\s+/).filter(word => word.length > 0).length;
     }
     
-    function processBotMessage(content, reasoningMethod) {
-      if (reasoningMethod === "cod") {
-        const separatorIndex = content.indexOf("####");
-        if (separatorIndex !== -1) {
-          let thinking = content.substring(0, separatorIndex).trim();
-          let answer = content.substring(separatorIndex + 4).trim();
-          return {
-            content, 
-            thinking, 
-            answer,
-            thinkingWordCount: countWords(thinking), 
-            answerWordCount: countWords(answer)
-          };
+    function parseCoDResponse(content) {
+      // Parse True CoD response with #### separator
+      const sections = {
+        reasoning: '',
+        answer: ''
+      };
+      
+      // Split on #### separator
+      const parts = content.split('####');
+      if (parts.length >= 2) {
+        sections.reasoning = parts[0].trim();
+        sections.answer = parts[1].trim();
+      } else {
+        sections.reasoning = content;
+      }
+      
+      return sections;
+    }
+    
+    function formatCoDSteps(reasoning) {
+      const lines = reasoning.split('\n').filter(line => line.trim());
+      let html = '';
+      let stepCounter = 1;
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) {
+          // Check if this looks like a reasoning step (short and concise)
+          if (trimmed.length <= COD_WORDS_PER_STEP * 8) { // Rough word count check
+            html += `
+              <div class="flex items-start p-2 mb-2 rounded-lg bg-green-900/20 border-l-2 border-green-500 cod-step">
+                <span class="flex items-center justify-center min-w-6 h-6 mr-3 rounded-full bg-green-700 text-green-200 text-xs font-bold">${stepCounter++}</span>
+                <span class="step-content font-mono text-sm text-green-100">${trimmed}</span>
+              </div>
+            `;
+          } else {
+            html += `<div class="text-sm text-gray-300 mb-1">${trimmed}</div>`;
+          }
         }
       }
-      return { 
-        content, 
-        thinking: null, 
-        answer: content, 
-        thinkingWordCount: 0, 
-        answerWordCount: countWords(content) 
-      };
-    }
-
-    function formatThinkingSteps(thinking, reasoningMethod) {
-      if (!thinking) return '';
-      let cleanedThinking = thinking.replace(/^#{1,3}\s*/gm, ''); 
       
-      if (reasoningMethod === "cod") {
-        let html = '';
-        let codStepCounter = 1;
-        
-        // Split by line breaks to capture each CoD step
-        let steps = cleanedThinking.split(/[\n.;]/).filter(step => step.trim().length > 0);
-        
-        steps.forEach(step => {
-          let stepContent = step.trim();
-          if (stepContent) {
-            html += `<div class="flex items-start p-2 mb-1 rounded-lg bg-emerald-800/20 border-l-2 border-emerald-500 thinking-step">
-                       <span class="flex items-center justify-center min-w-6 h-6 mr-2 rounded bg-emerald-700/50 text-emerald-300 text-xs font-mono">${codStepCounter++}</span>
-                       <span class="step-content font-mono text-sm text-emerald-200 font-medium">${stepContent}</span>
-                     </div>`;
-          }
-        });
-        
-        return html;
-      }
-      return `<div class="p-2 mb-2 border-l-2 border-slate-600">${transformMessage(cleanedThinking)}</div>`;
+      return html;
     }
     
     function transformMessage(content) {
@@ -839,7 +877,7 @@
           } else { // Bot message
             messageDiv.className = "flex justify-start";
             const msgContent = document.createElement("div");
-            msgContent.className = "max-w-[90%] bg-dark-700 border border-dark-500 p-4 rounded-2xl rounded-tl-sm shadow-md";
+            msgContent.className = "max-w-[95%] bg-dark-700 border border-dark-500 p-4 rounded-2xl rounded-tl-sm shadow-md";
             
             if (msg.isPlaceholder) {
               msgContent.classList.add("opacity-70");
@@ -847,36 +885,55 @@
             } else if (msg.isStreaming) {
               msgContent.classList.add("streaming");
               msgContent.innerHTML = transformMessage(msg.content); 
-              msgContent.innerHTML += `<div class="text-primary-400 text-xs mt-2 streaming-indicator">Generating</div>`;
-            } else if (msg.thinking) { 
-              const thinkingContainer = document.createElement("div");
-              thinkingContainer.className = "thinking-steps bg-dark-800 rounded-lg p-4 mb-4 border border-dark-600";
+              msgContent.innerHTML += `<div class="text-primary-400 text-xs mt-2 streaming-indicator">Generating CoD Reasoning</div>`;
+            } else if (msg.isCoD) { 
+              // Render True CoD Structure
+              const sections = parseCoDResponse(msg.content);
               
-              const thinkingLabel = document.createElement("div");
-              thinkingLabel.className = "text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3 pb-2 border-b border-dark-500 flex items-center gap-2";
-              thinkingLabel.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>Chain of Draft - Minimal Reasoning (≤${COD_WORD_LIMIT} words/step)`;
-              thinkingContainer.appendChild(thinkingLabel);
+              // CoD Reasoning Steps
+              if (sections.reasoning) {
+                const reasoningContainer = document.createElement("div");
+                reasoningContainer.className = "cod-response bg-green-900/20 rounded-lg p-4 mb-4 border border-green-700/30";
+                
+                const reasoningLabel = document.createElement("div");
+                reasoningLabel.className = "text-xs uppercase tracking-wider font-semibold text-green-400 mb-3 pb-2 border-b border-green-600/30 flex items-center justify-between";
+                reasoningLabel.innerHTML = `
+                  <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    Chain of Draft Reasoning
+                  </div>
+                  <div class="efficiency-badge text-xs text-white px-2 py-1 rounded-full">≤${COD_WORDS_PER_STEP} words/step</div>
+                `;
+                reasoningContainer.appendChild(reasoningLabel);
+                
+                const reasoningContent = document.createElement("div");
+                reasoningContent.innerHTML = formatCoDSteps(sections.reasoning);
+                reasoningContainer.appendChild(reasoningContent);
+                msgContent.appendChild(reasoningContainer);
+              }
               
-              const thinkingContentDiv = document.createElement("div");
-              thinkingContentDiv.innerHTML = formatThinkingSteps(msg.thinking, msg.reasoningMethod ? msg.reasoningMethod.toLowerCase().split('-')[0] : REASONING_METHOD);
-              thinkingContainer.appendChild(thinkingContentDiv);
-              msgContent.appendChild(thinkingContainer);
-              
-              if (msg.answer) {
-                const answerDiv = document.createElement("div");
-                answerDiv.className = "bg-dark-800 rounded-lg p-4 border border-dark-600";
+              // Final Answer
+              if (sections.answer) {
+                const answerContainer = document.createElement("div");
+                answerContainer.className = "bg-blue-900/20 rounded-lg p-4 border border-blue-700/30";
                 
                 const answerLabel = document.createElement("div");
-                answerLabel.className = "text-xs uppercase tracking-wider font-semibold text-primary-400 mb-3 pb-2 border-b border-dark-500";
-                answerLabel.textContent = "Final Answer";
-                answerDiv.appendChild(answerLabel);
+                answerLabel.className = "text-xs uppercase tracking-wider font-semibold text-blue-400 mb-3 pb-2 border-b border-blue-600/30 flex items-center";
+                answerLabel.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Final Answer
+                `;
+                answerContainer.appendChild(answerLabel);
                 
                 const answerContent = document.createElement("div");
-                answerContent.innerHTML = transformMessage(msg.answer); 
-                answerDiv.appendChild(answerContent);
-                msgContent.appendChild(answerDiv);
+                answerContent.className = "text-lg font-semibold text-blue-100";
+                answerContent.textContent = sections.answer;
+                answerContainer.appendChild(answerContent);
+                msgContent.appendChild(answerContainer);
               }
             } else { 
               msgContent.innerHTML = transformMessage(msg.content);
@@ -886,7 +943,7 @@
               const toolBadge = document.createElement("div");
               toolBadge.className = "mt-2 px-2 py-1 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-400";
               let toolCallSummary = msg.tool_calls.map(tc => tc.type === "function" && tc.function ? `${tc.function.name}(${tc.function.arguments ? Object.values(JSON.parse(tc.function.arguments)).join(', ') : ''})` : tc.type).join(", ");
-              toolBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> Requested: ${toolCallSummary}`;
+              toolBadge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg> Used: ${toolCallSummary}`;
               msgContent.appendChild(toolBadge);
             }
 
@@ -896,23 +953,18 @@
               
               let statsAdded = false;
               if (msg.wordCount !== undefined) {
-                let badgeText = `Words: <span class="text-gray-300">${msg.wordCount}</span>`;
-                if (msg.thinkingWordCount !== undefined && msg.answerWordCount !== undefined && (msg.thinkingWordCount > 0 || msg.answerWordCount > 0)) {
-                  badgeText = `Words: <span class="text-emerald-300">${msg.thinkingWordCount}</span> (CoD) + <span class="text-primary-300">${msg.answerWordCount}</span> (ans)`;
-                }
                 const wordStat = document.createElement('span');
-                wordStat.innerHTML = badgeText;
+                wordStat.innerHTML = `Words: <span class="text-gray-300">${msg.wordCount}</span>`;
                 statsDiv.appendChild(wordStat);
                 statsAdded = true;
               }
 
               if (msg.totalTokens !== undefined) {
-                let tokenText = `Tokens: <span class="text-teal-400 font-medium">${msg.totalTokens}</span> total`;
-                if (msg.promptTokens !== undefined && msg.completionTokens !== undefined) {
-                  tokenText = `Tokens: <span class="text-gray-300">${msg.promptTokens}</span> (p) + <span class="text-teal-300 font-medium">${msg.completionTokens}</span> (c)`;
-                }
                 const tokenStat = document.createElement('span');
-                tokenStat.innerHTML = tokenText;
+                tokenStat.innerHTML = `Tokens: <span class="text-emerald-300 font-medium">${msg.totalTokens}</span>`;
+                if (msg.promptTokens !== undefined && msg.completionTokens !== undefined) {
+                  tokenStat.innerHTML = `Tokens: <span class="text-gray-300">${msg.promptTokens}</span> (p) + <span class="text-emerald-300 font-medium">${msg.completionTokens}</span> (c)`;
+                }
                 statsDiv.appendChild(tokenStat);
                 statsAdded = true;
               }
@@ -921,6 +973,13 @@
                 const timeStat = document.createElement('span');
                 timeStat.innerHTML = `Time: <span class="text-amber-400 font-medium">${msg.durationSeconds}s</span>`;
                 statsDiv.appendChild(timeStat);
+                statsAdded = true;
+              }
+
+              if (msg.isCoD) {
+                const codStat = document.createElement('span');
+                codStat.innerHTML = `CoD: <span class="text-green-400 font-medium">≤${COD_WORDS_PER_STEP} words/step</span>`;
+                statsDiv.appendChild(codStat);
                 statsAdded = true;
               }
 
@@ -951,29 +1010,18 @@
     function addMessageToCurrentThread(content, sender, isPlaceholder = false, files = []) {
       const thread = threads.find(t => t.id === currentThreadId);
       if (thread) {
-        let thinking = null, answer = null, thinkingWordCount = 0, answerWordCount = 0, totalWordCount = 0;
-        
-        if (sender === "bot" && !isPlaceholder) {
-          const processed = processBotMessage(content, REASONING_METHOD);
-          thinking = processed.thinking; 
-          answer = processed.answer;
-          thinkingWordCount = processed.thinkingWordCount || 0; 
-          answerWordCount = processed.answerWordCount || 0;
-          totalWordCount = thinkingWordCount + answerWordCount;
-        }
+        const wordCount = sender === "bot" && !isPlaceholder ? countWords(content) : 0;
+        const isComplex = sender === "user" ? isComplexProblem(content) : false;
         
         thread.messages.push({
           content, 
           sender, 
           isPlaceholder, 
           timestamp: new Date(),
-          wordCount: sender === "bot" && !isPlaceholder ? totalWordCount : (countWords(content) || 0),
-          reasoningMethod: sender === "bot" && !isPlaceholder ? REASONING_METHOD.toUpperCase() : undefined,
-          thinking, 
-          answer, 
-          thinkingWordCount, 
-          answerWordCount,
+          wordCount: wordCount,
           files: files && files.length > 0 ? files.map(f => ({ name: f.name, type: f.type, size: f.size })) : undefined,
+          isCoD: sender === "bot" && !isPlaceholder && isComplex && ENABLE_COD_MODE,
+          isComplexProblem: isComplex
         });
         renderCurrentThreadMessages();
       }
@@ -984,8 +1032,13 @@
       if (!thread) return [];
       
       const messages = [];
-      if (REASONING_METHOD !== "standard") {
-        messages.push({ role: "system", content: PROMPTS[REASONING_METHOD] });
+      
+      // Check if the last user message should use CoD
+      const lastUserMessage = thread.messages.filter(msg => msg.sender === "user" && !msg.isPlaceholder).pop();
+      const useCoD = lastUserMessage && isComplexProblem(lastUserMessage.content) && ENABLE_COD_MODE;
+      
+      if (useCoD) {
+        messages.push({ role: "system", content: generateTrueCoDPrompt() });
       }
       
       thread.messages.filter(msg => !msg.isPlaceholder).forEach(msg => {
@@ -1002,12 +1055,12 @@
     
     function getToolsConfiguration() {
       const tools = [];
-      if (ENABLED_MCP_TOOLS.includes("tavily_search") || enableWebSearchQuickToggle) {
+      if (ENABLED_TOOLS.includes("tavily_search") || enableWebSearchQuickToggle) {
         tools.push({ 
           type: "function", 
           function: { 
             name: "tavily_search", 
-            description: "Performs a web search using Tavily for up-to-date information.", 
+            description: "Performs a web search using Tavily for current information to enhance CoD reasoning.", 
             parameters: { 
               type: "object", 
               properties: { 
@@ -1027,6 +1080,9 @@
     async function sendMessage(message) {
       ENABLE_STREAMING = (localStorage.getItem('streamingEnabled') !== null) ? (localStorage.getItem('streamingEnabled') === 'true') : ENABLE_STREAMING;
       
+      const isComplex = isComplexProblem(message);
+      const willUseCoD = isComplex && ENABLE_COD_MODE;
+      
       addMessageToCurrentThread(message, "user", false, attachedFiles.map(f => ({name: f.name, type: f.type, size: f.size})));
       attachedFiles = []; 
       const attachedFilesContainer = document.getElementById('attachedFiles');
@@ -1035,7 +1091,7 @@
         attachedFilesContainer.classList.add('hidden'); 
       }
       
-      let placeholderText = "Thinking...";
+      let placeholderText = willUseCoD ? "Analyzing with Chain of Draft reasoning..." : "Thinking...";
       addMessageToCurrentThread(placeholderText, "bot", true);
       const thread = threads.find(t => t.id === currentThreadId);
       const placeholderIndex = thread.messages.length - 1;
@@ -1047,8 +1103,8 @@
         const messagesForApi = buildMessagesForChat();
         const tools = getToolsConfiguration();
         let validatedMaxTokens = parseInt(MAX_TOKENS);
-        if (isNaN(validatedMaxTokens) || !isFinite(validatedMaxTokens)) validatedMaxTokens = 8192;
-        validatedMaxTokens = Math.min(Math.max(1, validatedMaxTokens), 16384);
+        if (isNaN(validatedMaxTokens) || !isFinite(validatedMaxTokens)) validatedMaxTokens = 2000;
+        validatedMaxTokens = Math.min(Math.max(512, validatedMaxTokens), 8192);
         
         const payload = { 
           model: FIREWORKS_MODEL, 
@@ -1057,8 +1113,6 @@
           top_p: TOP_P, 
           top_k: TOP_K, 
           max_tokens: validatedMaxTokens, 
-          presence_penalty: PRESENCE_PENALTY, 
-          frequency_penalty: FREQUENCY_PENALTY, 
           stream: ENABLE_STREAMING 
         };
         
@@ -1068,8 +1122,8 @@
         }
         
         if (ENABLE_STREAMING) {
-          console.log("Using streaming mode. Payload:", JSON.stringify(payload, null, 2).substring(0,500) + "...");
-          thread.messages[placeholderIndex].content = "Connecting to streaming API..."; 
+          console.log("Using CoD streaming mode. Complex problem detected:", isComplex, "Will use CoD:", willUseCoD);
+          thread.messages[placeholderIndex].content = "Connecting to CoD API..."; 
           renderCurrentThreadMessages();
           
           let fullResponse = ""; 
@@ -1087,15 +1141,15 @@
     
           if (!response.ok) { 
             const errorText = await response.text(); 
-            console.error("Streaming API Error Status:", response.status);
-            console.error("Streaming API Error Text:", errorText); 
+            console.error("CoD Streaming API Error Status:", response.status);
+            console.error("CoD Streaming API Error Text:", errorText); 
             let errorData; 
             try { 
               errorData = JSON.parse(errorText); 
             } catch (e) { 
               errorData = { message: response.statusText || "Unknown streaming error" }; 
             } 
-            throw new Error(`Error starting stream: ${response.status} - ${errorData.fault?.faultstring || errorData.message || 'Unknown error'}`); 
+            throw new Error(`Error starting CoD stream: ${response.status} - ${errorData.fault?.faultstring || errorData.message || 'Unknown error'}`); 
           }
           
           const reader = response.body.getReader(); 
@@ -1104,7 +1158,7 @@
           while (true) {
             const { done, value } = await reader.read(); 
             if (done) { 
-              console.log("Stream complete"); 
+              console.log("CoD Stream complete"); 
               break; 
             }
             
@@ -1154,6 +1208,7 @@
                       isPlaceholder: false, 
                       timestamp: new Date(), 
                       isStreaming: true, 
+                      isCoD: willUseCoD,
                       tool_calls: currentToolCalls.length > 0 ? JSON.parse(JSON.stringify(currentToolCalls)) : undefined 
                     };
                     
@@ -1166,7 +1221,7 @@
                     }
                     
                     if (data.choices[0].finish_reason) {
-                      console.log("Stream finished with reason:", data.choices[0].finish_reason);
+                      console.log("CoD Stream finished with reason:", data.choices[0].finish_reason);
                       if(data.usage) {
                          usageData = data.usage;
                       }
@@ -1174,7 +1229,7 @@
                   }
                 } catch (parseError) { 
                   if (dataText) {
-                    console.log("Non-JSON data or parse error in stream:", dataText, parseError); 
+                    console.log("Non-JSON data or parse error in CoD stream:", dataText, parseError); 
                   }
                 }
               }
@@ -1183,19 +1238,14 @@
           
           const endTime = performance.now();
           const durationSeconds = ((endTime - startTime) / 1000).toFixed(2);
-          const processed = processBotMessage(fullResponse, REASONING_METHOD);
           
           thread.messages[placeholderIndex] = { 
             content: fullResponse, 
             sender: "bot", 
             isPlaceholder: false, 
             timestamp: new Date(), 
-            wordCount: (processed.thinkingWordCount || 0) + (processed.answerWordCount || 0), 
-            reasoningMethod: REASONING_METHOD.toUpperCase(), 
-            thinking: processed.thinking, 
-            answer: processed.answer, 
-            thinkingWordCount: processed.thinkingWordCount || 0, 
-            answerWordCount: processed.answerWordCount || 0, 
+            wordCount: countWords(fullResponse), 
+            isCoD: willUseCoD,
             isStreaming: false, 
             tool_calls: currentToolCalls.length > 0 ? currentToolCalls : undefined,
             durationSeconds: durationSeconds,
@@ -1206,7 +1256,7 @@
           renderCurrentThreadMessages();
     
         } else { // Non-streaming
-          console.log("Sending non-streaming request. Payload:", JSON.stringify(payload, null, 2).substring(0,500) + "...");
+          console.log("Sending CoD non-streaming request. Complex problem detected:", isComplex, "Will use CoD:", willUseCoD);
           
           const response = await fetch('/api/chat', { 
             method: "POST", 
@@ -1219,15 +1269,15 @@
           
           if (!response.ok) { 
             const errorText = await response.text(); 
-            console.error("Non-Streaming API Error Status:", response.status);
-            console.error("Non-Streaming API Error Text:", errorText); 
+            console.error("CoD Non-Streaming API Error Status:", response.status);
+            console.error("CoD Non-Streaming API Error Text:", errorText); 
             let errorData; 
             try { 
               errorData = JSON.parse(errorText); 
             } catch (e) { 
               errorData = { message: response.statusText || "Unknown non-streaming error" };
             } 
-            throw new Error(`API returned status: ${response.status} - ${errorData.fault?.faultstring || errorData.message || 'Unknown error'}`);
+            throw new Error(`CoD API returned status: ${response.status} - ${errorData.fault?.faultstring || errorData.message || 'Unknown error'}`);
           }
           
           const data = await response.json();
@@ -1240,19 +1290,14 @@
           
           if (botReply || toolCalls) {
             const finalContent = botReply || ""; 
-            const processed = processBotMessage(finalContent, REASONING_METHOD);
             
             thread.messages[placeholderIndex] = { 
                 content: finalContent, 
                 sender: "bot", 
                 isPlaceholder: false, 
                 timestamp: new Date(), 
-                wordCount: (processed.thinkingWordCount || 0) + (processed.answerWordCount || 0), 
-                reasoningMethod: REASONING_METHOD.toUpperCase(), 
-                thinking: processed.thinking, 
-                answer: processed.answer, 
-                thinkingWordCount: processed.thinkingWordCount || 0, 
-                answerWordCount: processed.answerWordCount || 0, 
+                wordCount: countWords(finalContent), 
+                isCoD: willUseCoD,
                 tool_calls: toolCalls,
                 durationSeconds: durationSeconds,
                 promptTokens: usageData ? usageData.prompt_tokens : undefined,
@@ -1261,12 +1306,12 @@
             };
             renderCurrentThreadMessages();
           } else { 
-            console.error("API Response Data:", data); 
-            throw new Error("No content or tool_calls in API response."); 
+            console.error("CoD API Response Data:", data); 
+            throw new Error("No content or tool_calls in CoD API response."); 
           }
         }
       } catch (error) {
-        console.error("Error sending message:", error);
+        console.error("Error sending CoD message:", error);
         const endTime = performance.now(); 
         const durationSeconds = ((endTime - startTime) / 1000).toFixed(2);
         let errorMessage = "Error: " + error.message;
@@ -1279,11 +1324,7 @@
             isPlaceholder: false, 
             timestamp: new Date(), 
             wordCount: 0, 
-            reasoningMethod: REASONING_METHOD.toUpperCase(), 
-            thinking: null, 
-            answer: null, 
-            thinkingWordCount: 0, 
-            answerWordCount: 0,
+            isCoD: false,
             durationSeconds: durationSeconds, 
         };
         renderCurrentThreadMessages();
@@ -1345,9 +1386,8 @@
       if (enableWebSearchQuickToggle) { 
         btn.classList.add('bg-primary-500', 'text-white'); 
         btn.classList.remove('bg-dark-500', 'text-gray-300'); 
-        btn.title = "Tavily Web Search enabled"; 
+        btn.title = "Tavily Web Search enabled for CoD"; 
       } else { 
- 
         btn.classList.remove('bg-primary-500', 'text-white'); 
         btn.classList.add('bg-dark-500', 'text-gray-300'); 
         btn.title = "Tavily Web Search disabled"; 
@@ -1357,17 +1397,17 @@
       if (tavilyToolCheckbox) { 
         tavilyToolCheckbox.checked = enableWebSearchQuickToggle; 
         if (enableWebSearchQuickToggle) { 
-          if (!ENABLED_MCP_TOOLS.includes("tavily_search")) {
-            ENABLED_MCP_TOOLS.push("tavily_search"); 
+          if (!ENABLED_TOOLS.includes("tavily_search")) {
+            ENABLED_TOOLS.push("tavily_search"); 
           }
         } else { 
-          ENABLED_MCP_TOOLS = ENABLED_MCP_TOOLS.filter(t => t !== "tavily_search"); 
+          ENABLED_TOOLS = ENABLED_TOOLS.filter(t => t !== "tavily_search"); 
         }
       }
       
       localStorage.setItem('enableWebSearchQuickToggle', enableWebSearchQuickToggle.toString()); 
-      localStorage.setItem('enabledMcpTools', JSON.stringify(ENABLED_MCP_TOOLS));
-      showNotification(enableWebSearchQuickToggle ? 'Tavily search enabled' : 'Tavily search disabled');
+      localStorage.setItem('enabledTools', JSON.stringify(ENABLED_TOOLS));
+      showNotification(enableWebSearchQuickToggle ? 'Tavily search enabled for CoD' : 'Tavily search disabled');
     }
 
     function setupTabNavigation() {
@@ -1400,56 +1440,6 @@
       });
     }
     
-    function setupCODOptionsDisplay() {
-      const reasoningRadios = document.getElementsByName('reasoningMethod'); 
-      const codOptionsDisplay = document.getElementById('codOptions'); 
-      if (!codOptionsDisplay) return;
-      
-      const updateDisplay = () => { 
-        const selectedReasoning = document.querySelector('input[name="reasoningMethod"]:checked'); 
-        if (selectedReasoning && selectedReasoning.value === 'cod') { 
-          codOptionsDisplay.style.display = 'block'; 
-        } else { 
-          codOptionsDisplay.style.display = 'none'; 
-        }
-      };
-      
-      updateDisplay(); 
-      reasoningRadios.forEach(radio => radio.addEventListener('change', updateDisplay));
-    }
-
-    function updateCoDPrompt() {
-      // Exact Chain of Draft prompt from the research paper
-      PROMPTS.cod = `Think step by step, but only keep a minimum draft for each thinking step, with ${COD_WORD_LIMIT} words at most. Return the answer at the end of the response after a separator ####.`;
-    }
-    
-    function setupMcpToolsOptions() {
-      const toolCheckboxes = document.querySelectorAll('input[name="mcp_tools"]');
-      toolCheckboxes.forEach(checkbox => {
-        const toolName = checkbox.value; 
-        checkbox.checked = ENABLED_MCP_TOOLS.includes(toolName) || (toolName === "tavily_search" && enableWebSearchQuickToggle);
-        
-        checkbox.addEventListener('change', () => {
-          if (checkbox.checked) { 
-            if (!ENABLED_MCP_TOOLS.includes(toolName)) {
-              ENABLED_MCP_TOOLS.push(toolName); 
-            }
-            if (toolName === "tavily_search") {
-              enableWebSearchQuickToggle = true; 
-            }
-          } else { 
-            ENABLED_MCP_TOOLS = ENABLED_MCP_TOOLS.filter(tool => tool !== toolName); 
-            if (toolName === "tavily_search") {
-              enableWebSearchQuickToggle = false; 
-            }
-          }
-          localStorage.setItem('enabledMcpTools', JSON.stringify(ENABLED_MCP_TOOLS)); 
-          localStorage.setItem('enableWebSearchQuickToggle', enableWebSearchQuickToggle.toString()); 
-          updateWebSearchButtonAppearance();
-        });
-      });
-    }
-    
     function setupSliders() {
       document.querySelectorAll('input[type="range"]').forEach(slider => {
         const valueDisplay = document.getElementById(`${slider.id}Value`);
@@ -1460,10 +1450,9 @@
             valueDisplay.textContent = slider.value; 
             updateRangeColor(slider); 
             
-            // Update CoD word limit setting
-            if (slider.id === 'codWordLimit') {
-              COD_WORD_LIMIT = parseInt(slider.value);
-              updateCoDPrompt();
+            // Update CoD words per step in real-time
+            if (slider.id === 'codWordsPerStep') {
+              COD_WORDS_PER_STEP = parseInt(slider.value);
             }
           });
         }
@@ -1479,27 +1468,26 @@
     }
     
     function openSettingsModal() {
-      const reasoningRadio = document.getElementById(`${REASONING_METHOD}Reasoning`); 
-      if (reasoningRadio) reasoningRadio.checked = true;
-      
+      // Set current values
+      setSliderAndValue("codWordsPerStep", COD_WORDS_PER_STEP);
       setSliderAndValue("temp", TEMPERATURE); 
       setSliderAndValue("topP", TOP_P); 
       setSliderAndValue("topK", TOP_K); 
-      setSliderAndValue("maxTokens", MAX_TOKENS); 
-      setSliderAndValue("presencePenalty", PRESENCE_PENALTY); 
-      setSliderAndValue("frequencyPenalty", FREQUENCY_PENALTY);
-      setSliderAndValue("codWordLimit", COD_WORD_LIMIT);
+      setSliderAndValue("maxTokens", MAX_TOKENS);
       
-      setupCODOptionsDisplay(); 
-      setupMcpToolsOptions();
+      // Set checkboxes
+      document.getElementById('codModeToggle').checked = ENABLE_COD_MODE;
+      document.getElementById('enableProblemDetection').checked = ENABLE_PROBLEM_DETECTION;
       
       const streamingToggle = document.getElementById('streamingToggle'); 
       if (streamingToggle) streamingToggle.checked = ENABLE_STREAMING;
       
+      setupToolsOptions();
+      
       const modal = document.getElementById("settingsModal"); 
       if (modal) modal.style.display = "flex";
       
-      // Set default tab to Reasoning
+      // Set default tab to CoD Config
       const tabButtons = document.querySelectorAll('.tab-btn'); 
       const tabContents = document.querySelectorAll('.tab-content');
       
@@ -1539,52 +1527,78 @@
     }
     
     function saveSettings() {
+      // CoD Settings
+      COD_WORDS_PER_STEP = parseInt(document.getElementById("codWordsPerStep").value);
+      ENABLE_COD_MODE = document.getElementById('codModeToggle').checked;
+      ENABLE_PROBLEM_DETECTION = document.getElementById('enableProblemDetection').checked;
+      
+      // Streaming
       const streamingToggle = document.getElementById('streamingToggle'); 
       if (streamingToggle) { 
         ENABLE_STREAMING = streamingToggle.checked; 
         localStorage.setItem('streamingEnabled', ENABLE_STREAMING.toString()); 
       }
       
-      const reasoningRadios = document.getElementsByName("reasoningMethod"); 
-      for (const radio of reasoningRadios) {
-        if (radio.checked) REASONING_METHOD = radio.value;
-      }
-      
+      // Model Parameters
       TEMPERATURE = parseFloat(document.getElementById("temp").value); 
       if (TEMPERATURE === 0 && document.getElementById("temp").min === "0") TEMPERATURE = 0.01;
       TOP_P = parseFloat(document.getElementById("topP").value); 
       TOP_K = parseInt(document.getElementById("topK").value); 
-      PRESENCE_PENALTY = parseFloat(document.getElementById("presencePenalty").value); 
-      FREQUENCY_PENALTY = parseFloat(document.getElementById("frequencyPenalty").value); 
       MAX_TOKENS = parseInt(document.getElementById("maxTokens").value);
-      COD_WORD_LIMIT = parseInt(document.getElementById("codWordLimit").value);
       
-      ENABLED_MCP_TOOLS = []; 
-      document.querySelectorAll('input[name="mcp_tools"]').forEach(checkbox => { 
-        if (checkbox.checked) ENABLED_MCP_TOOLS.push(checkbox.value); 
+      // Tools
+      ENABLED_TOOLS = []; 
+      document.querySelectorAll('input[name="tools"]').forEach(checkbox => { 
+        if (checkbox.checked) ENABLED_TOOLS.push(checkbox.value); 
       });
       
-      if (ENABLED_MCP_TOOLS.includes("tavily_search")) {
+      if (ENABLED_TOOLS.includes("tavily_search")) {
         enableWebSearchQuickToggle = true; 
       } else {
         enableWebSearchQuickToggle = false;
       }
       
-      localStorage.setItem("reasoningMethod", REASONING_METHOD); 
+      // Save to localStorage
+      localStorage.setItem("codWordsPerStep", COD_WORDS_PER_STEP.toString());
+      localStorage.setItem("enableCodMode", ENABLE_COD_MODE.toString());
+      localStorage.setItem("enableProblemDetection", ENABLE_PROBLEM_DETECTION.toString());
       localStorage.setItem("temperature", TEMPERATURE.toString()); 
       localStorage.setItem("topP", TOP_P.toString()); 
       localStorage.setItem("topK", TOP_K.toString()); 
-      localStorage.setItem("presencePenalty", PRESENCE_PENALTY.toString()); 
-      localStorage.setItem("frequencyPenalty", FREQUENCY_PENALTY.toString()); 
       localStorage.setItem("maxTokens", MAX_TOKENS.toString()); 
-      localStorage.setItem("codWordLimit", COD_WORD_LIMIT.toString());
-      localStorage.setItem("enabledMcpTools", JSON.stringify(ENABLED_MCP_TOOLS)); 
+      localStorage.setItem("enabledTools", JSON.stringify(ENABLED_TOOLS)); 
       localStorage.setItem("enableWebSearchQuickToggle", enableWebSearchQuickToggle.toString());
       
-      updateCoDPrompt(); 
       updateWebSearchButtonAppearance(); 
       closeSettingsModal(); 
-      showNotification("Settings saved");
+      showNotification("CoD settings saved successfully");
+    }
+    
+    function setupToolsOptions() {
+      const toolCheckboxes = document.querySelectorAll('input[name="tools"]');
+      toolCheckboxes.forEach(checkbox => {
+        const toolName = checkbox.value; 
+        checkbox.checked = ENABLED_TOOLS.includes(toolName) || (toolName === "tavily_search" && enableWebSearchQuickToggle);
+        
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) { 
+            if (!ENABLED_TOOLS.includes(toolName)) {
+              ENABLED_TOOLS.push(toolName); 
+            }
+            if (toolName === "tavily_search") {
+              enableWebSearchQuickToggle = true; 
+            }
+          } else { 
+            ENABLED_TOOLS = ENABLED_TOOLS.filter(tool => tool !== toolName); 
+            if (toolName === "tavily_search") {
+              enableWebSearchQuickToggle = false; 
+            }
+          }
+          localStorage.setItem('enabledTools', JSON.stringify(ENABLED_TOOLS)); 
+          localStorage.setItem('enableWebSearchQuickToggle', enableWebSearchQuickToggle.toString()); 
+          updateWebSearchButtonAppearance();
+        });
+      });
     }
     
     function updateWebSearchButtonAppearance() {
@@ -1594,7 +1608,7 @@
       if (enableWebSearchQuickToggle) { 
         btn.classList.add('bg-primary-500', 'text-white'); 
         btn.classList.remove('bg-dark-500', 'text-gray-300'); 
-        btn.title = "Tavily Web Search enabled"; 
+        btn.title = "Tavily Web Search enabled for CoD"; 
       } else { 
         btn.classList.remove('bg-primary-500', 'text-white'); 
         btn.classList.add('bg-dark-500', 'text-gray-300'); 
@@ -1654,8 +1668,17 @@
     }
     
     function loadPersistedSettings() {
-      REASONING_METHOD = localStorage.getItem("reasoningMethod") || "cod";
+      // CoD Settings
+      const codWords = localStorage.getItem("codWordsPerStep"); 
+      if (codWords) COD_WORDS_PER_STEP = parseInt(codWords);
       
+      const codMode = localStorage.getItem("enableCodMode"); 
+      if (codMode !== null) ENABLE_COD_MODE = codMode === "true";
+      
+      const problemDetection = localStorage.getItem("enableProblemDetection"); 
+      if (problemDetection !== null) ENABLE_PROBLEM_DETECTION = problemDetection === "true";
+      
+      // Model Parameters
       const temp = localStorage.getItem("temperature"); 
       if (temp) TEMPERATURE = parseFloat(temp);
       
@@ -1663,58 +1686,26 @@
       if (topP) TOP_P = parseFloat(topP);
       
       const topK = localStorage.getItem("topK"); 
-      if (topK) {
-        TOP_K = parseInt(topK); 
-      } else {
-        TOP_K = 40;
-      }
-      
-      const presencePenalty = localStorage.getItem("presencePenalty"); 
-      if (presencePenalty) PRESENCE_PENALTY = parseFloat(presencePenalty);
-      
-      const frequencyPenalty = localStorage.getItem("frequencyPenalty"); 
-      if (frequencyPenalty) FREQUENCY_PENALTY = parseFloat(frequencyPenalty);
+      if (topK) TOP_K = parseInt(topK);
       
       const maxTokens = localStorage.getItem("maxTokens"); 
-      if (maxTokens) {
-        MAX_TOKENS = parseInt(maxTokens); 
-      } else {
-        MAX_TOKENS = 8192;
-      }
-
-      const codWordLimit = localStorage.getItem("codWordLimit");
-      if (codWordLimit) {
-        COD_WORD_LIMIT = parseInt(codWordLimit);
-      } else {
-        COD_WORD_LIMIT = 5;
-      }
+      if (maxTokens) MAX_TOKENS = parseInt(maxTokens);
       
       const streaming = localStorage.getItem('streamingEnabled'); 
-      if (streaming !== null) {
-        ENABLE_STREAMING = streaming === 'true'; 
-      } else {
-        ENABLE_STREAMING = true;
-      }
+      if (streaming !== null) ENABLE_STREAMING = streaming === 'true';
       
-      const mcpTools = localStorage.getItem('enabledMcpTools'); 
-      if (mcpTools) { 
+      // Tools
+      const tools = localStorage.getItem('enabledTools'); 
+      if (tools) { 
         try { 
-          ENABLED_MCP_TOOLS = JSON.parse(mcpTools); 
+          ENABLED_TOOLS = JSON.parse(tools); 
         } catch(e) { 
-          ENABLED_MCP_TOOLS = []; 
+          ENABLED_TOOLS = []; 
         }
-      } else { 
-        ENABLED_MCP_TOOLS = []; 
       }
       
       const webSearchToggle = localStorage.getItem('enableWebSearchQuickToggle'); 
-      if (webSearchToggle !== null) {
-        enableWebSearchQuickToggle = webSearchToggle === 'true'; 
-      } else {
-        enableWebSearchQuickToggle = false;
-      }
-      
-      updateCoDPrompt(); 
+      if (webSearchToggle !== null) enableWebSearchQuickToggle = webSearchToggle === 'true';
     }
     
     function initApp() { 
@@ -1723,6 +1714,11 @@
       initEventListeners(); 
       initMobileNavigation(); 
       updateWebSearchButtonAppearance(); 
+      
+      // Show welcome message
+      setTimeout(() => {
+        showNotification("Chain of Draft ready! 🚀 Ask complex problems to see 80-90% token reduction.", 5000);
+      }, 1000);
     }
     
     function initEventListeners() {
@@ -1745,7 +1741,7 @@
       addListener("downloadTxtBtn", "click", downloadCurrentThreadAsTxt);
       
       addListener("clearThreadBtn", "click", () => { 
-        if (confirm("Clear messages?")) { 
+        if (confirm("Clear all messages in this thread?")) { 
           const thread = threads.find(t => t.id === currentThreadId); 
           if (thread) { 
             thread.messages = []; 
@@ -1795,8 +1791,6 @@
       
       setTimeout(() => { 
         setupTabNavigation(); 
-        setupCODOptionsDisplay(); 
-        setupMcpToolsOptions(); 
         setupSliders(); 
       }, 100);
     }
