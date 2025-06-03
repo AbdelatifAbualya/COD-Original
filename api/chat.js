@@ -37,12 +37,11 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log('Processing Chain of Draft request:', { 
+    console.log('Processing request:', { 
       model, 
       messageCount: messages.length, 
       stream: !!stream,
-      toolsEnabled: !!(tools && tools.length > 0),
-      lastMessage: messages[messages.length - 1]?.content?.substring(0, 100) + '...'
+      toolsEnabled: !!(tools && tools.length > 0)
     });
 
     // Prepare the request to Fireworks API
@@ -139,12 +138,6 @@ module.exports = async (req, res) => {
       }
 
       const data = await response.json();
-      console.log('Chain of Draft response received:', {
-        choices: data.choices?.length || 0,
-        usage: data.usage,
-        contentLength: data.choices?.[0]?.message?.content?.length || 0
-      });
-      
       return res.status(200).json(data);
     }
 
