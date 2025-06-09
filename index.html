@@ -501,7 +501,7 @@
                 <input type="radio" id="enhancedCoD" name="reasoningMethod" value="enhanced_cod" checked class="w-4 h-4 mt-1 text-deepseek-500 bg-dark-500 border-dark-400 focus:ring-deepseek-500 focus:ring-offset-dark-700">
                 <label for="enhancedCoD" class="ml-3 block text-sm font-medium text-white">
                   Adaptive Chain of Draft
-                  <div class="text-gray-400 text-xs mt-1">Applies CoD methodology. Reasoning depth and word limits are adjusted automatically based on query complexity.</div>
+                  <div class="text-gray-400 text-xs mt-1">Applies CoD methodology. Reasoning depth and word limits are adjusted automatically. Activates a special systematic verification framework for code analysis.</div>
                 </label>
               </div>
             </div>
@@ -601,7 +601,7 @@
      * PROMPTS FOR DEEPSEEK V3-0324
      ===================================*/
     const ENHANCED_PROMPTS = {
-        // Adaptive Chain of Draft (Single Stage)
+        // General Adaptive Chain of Draft (Single Stage)
         adaptive_cod: (wordLimit) => `You are DeepSeek V3-0324, an advanced reasoning model. Your task is to solve the user's problem using the Adaptive Chain of Draft (CoD) methodology in a single, comprehensive response.
 
 CRITICAL INSTRUCTIONS:
@@ -628,6 +628,120 @@ CoD Step 3: [Your reasoning step, max ${wordLimit} words]
 [Your final, complete, and verified answer]
 
 Execute this process diligently to provide a high-quality, structured response.`,
+        
+        // **NEW** Specialized prompt for Code Analysis
+        adaptive_code_analysis: (wordLimit) => `You are DeepSeek V3-0324, an expert code reviewer and debugger. Your task is to analyze the user's code using the Systematic Verification Framework provided below, integrated within a Chain of Draft (CoD) process.
+
+Your entire response MUST follow this exact format:
+
+#### PROBLEM ANALYSIS
+[Your detailed analysis of the user's request and the code provided]
+
+#### CHAIN OF DRAFT STEPS
+[Follow the CoD structure below. Each step must be concise, with a strict maximum of **${wordLimit} words**]
+
+#### INITIAL REFLECTION
+[Use this section to perform a meta-cognitive check and verify your analysis against the framework.]
+
+#### FINAL COMPREHENSIVE ANSWER
+[Your final, complete, and verified analysis, including code suggestions if applicable.]
+
+---
+
+### Systematic Verification Framework & CoD Integration
+
+**When analyzing code, you MUST follow this systematic verification framework:**
+
+**STEP 1: STRUCTURAL ANALYSIS**
+- Map out the code architecture (classes, functions, data flow, dependencies)
+- Identify key mechanisms (locks, error handling, state management, algorithms)
+- Verify your understanding of how these mechanisms actually work in THIS specific code
+
+**STEP 2: MULTI-HYPOTHESIS GENERATION**
+Generate 3-5 different potential issues across these categories:
+- Logic errors (edge cases, boundary conditions, algorithmic flaws)
+- Resource management (memory, files, connections, cleanup)
+- State consistency (data integrity, synchronization, lifecycle)
+- Performance issues (complexity, bottlenecks, inefficiencies)
+- Security vulnerabilities (input validation, access control, data exposure)
+- Error handling gaps (exception scenarios, failure modes)
+
+**STEP 3: CONCRETE DEMONSTRATION**
+For each potential issue:
+- Provide specific input/scenario that triggers the problem
+- Show exact execution path with line-by-line trace
+- Demonstrate the failure mode with concrete examples
+- If you cannot provide these details, discard the hypothesis
+
+**STEP 4: ASSUMPTION CHALLENGE**
+Before finalizing analysis:
+- What assumptions am I making about how this code works?
+- Am I pattern-matching to common issues or analyzing THIS specific implementation?
+- What would happen if my assumptions are wrong?
+- Can I construct a scenario where my identified issue doesn't actually occur?
+
+**STEP 5: EVIDENCE VERIFICATION**
+- Quote specific lines of code that support your analysis
+- Explain WHY the code structure enables the issue you identified
+- Provide counter-evidence: what mechanisms might prevent this issue?
+- Rate your confidence and explain your reasoning
+
+**META-COGNITIVE CHECK (for the INITIAL REFLECTION section):**
+- Am I looking for the most obvious/common problems in this domain?
+- Have I actually read and understood the code structure?
+- Can I defend my analysis against skeptical questioning?
+- What would an expert code reviewer say about my findings?
+
+Only provide issues you can demonstrate with specific, reproducible scenarios.
+
+### Chain of Draft Reasoning Integration:
+**Your "CHAIN OF DRAFT STEPS" section MUST follow this structure:**
+
+**Draft 1: "Understand the code structure and key mechanisms"**
+- Map architecture and identify critical components.
+- Verify understanding of how mechanisms work.
+
+**Draft 2: "Generate multiple potential issues across different categories"**  
+- Brainstorm potential problems in logic, resources, state, performance, security, error handling.
+- Don't focus on just one type of problem.
+
+**Draft 3: "Provide concrete demonstrations for each viable issue"**
+- Develop specific scenarios, execution traces, and failure examples.
+- Eliminate hypotheses you cannot demonstrate.
+
+**Draft 4: "Challenge assumptions and verify evidence"**
+- Question your reasoning, provide supporting code quotes.
+- Consider counter-arguments and alternative explanations.
+
+**Draft 5: "Final analysis with confidence ratings"**
+- Synthesize verified issues with evidence and reproducible scenarios.
+- Acknowledge limitations and areas of uncertainty.
+
+### Domain-Specific Adaptations:
+Remember to apply these additional considerations based on the code's domain:
+
+**For Web Applications:**
+- Authentication/authorization flows
+- Input validation and sanitization  
+- Database query efficiency and injection risks
+- Session management and state handling
+- API design and error responses
+
+**For Algorithms:**
+- Time/space complexity analysis
+- Edge cases (empty inputs, single elements, maximum values)
+- Correctness proofs for core logic
+- Numerical stability and overflow conditions
+- Termination guarantees for loops/recursion
+
+**For System Design:**
+- Scalability bottlenecks and failure points
+- Data consistency and distributed system issues
+- Resource contention and deadlock potential
+- Monitoring and observability gaps
+- Disaster recovery and fault tolerance
+
+Execute this entire process diligently.`,
     };
 
     /*====================================
@@ -836,10 +950,11 @@ Execute this process diligently to provide a high-quality, structured response.`
                             <span>⚡</span>
                             <span>Chain of Draft Steps (${wordLimit} words max)</span>
                         </div>`;
-            const steps = codStepsRaw.trim().split('\n').filter(line => line.trim().toLowerCase().startsWith('cod step'));
+            const steps = codStepsRaw.trim().split(/\n(?=Draft \d+:|CoD Step \d+:)/i).filter(line => line.trim().toLowerCase().startsWith('draft') || line.trim().toLowerCase().startsWith('cod step'));
+            
             let stepCounter = 1;
             steps.forEach(step => {
-                const stepContent = step.replace(/^cod step \d+:/i, '').trim();
+                const stepContent = step.replace(/^(draft \d+:|cod step \d:)/i, '').trim();
                 const wordCount = countWords(stepContent);
                 const isWithinLimit = wordCount <= wordLimit;
                 
@@ -1156,8 +1271,19 @@ Execute this process diligently to provide a high-quality, structured response.`
         const thread = threads.find(t => t.id === currentThreadId);
 
         const adaptiveSettings = getAdaptiveEnhancedSettings(message);
-        if (adaptiveSettings.reasoning) {
-            showNotification(adaptiveSettings.reasoning, 4000);
+        let systemPrompt;
+        let notificationMessage = adaptiveSettings.reasoning;
+
+        // **UPDATED LOGIC**: Select prompt based on content
+        if (adaptiveSettings.complexity.hasCoding) {
+            systemPrompt = ENHANCED_PROMPTS.adaptive_code_analysis(adaptiveSettings.wordLimit);
+            notificationMessage = "Code analysis detected. Applying Systematic Verification Framework.";
+        } else {
+            systemPrompt = ENHANCED_PROMPTS.adaptive_cod(adaptiveSettings.wordLimit);
+        }
+
+        if (notificationMessage) {
+            showNotification(notificationMessage, 4000);
         }
         
         addMessageToCurrentThread("🧠 Applying Adaptive Chain of Draft...", "bot", true);
@@ -1166,16 +1292,16 @@ Execute this process diligently to provide a high-quality, structured response.`
         let apiMessages = [
             { 
                 role: "system", 
-                content: ENHANCED_PROMPTS.adaptive_cod(adaptiveSettings.wordLimit)
+                content: systemPrompt
             },
             { 
                 role: "user", 
-                content: `Please solve this problem using the Adaptive Chain of Draft methodology:\n\n${message}` 
+                content: `Please analyze the following request using the provided framework:\n\n${message}` 
             }
         ];
 
         if (CONFIG.enableStreaming) {
-            await streamDeepSeekAPI(apiMessages, placeholderIndex, 'adaptive_cod', adaptiveSettings.wordLimit, adaptiveSettings.reasoning);
+            await streamDeepSeekAPI(apiMessages, placeholderIndex, 'adaptive_cod', adaptiveSettings.wordLimit, notificationMessage);
         } else {
             showProgress(true, 50);
             const startTime = performance.now();
@@ -1190,7 +1316,7 @@ Execute this process diligently to provide a high-quality, structured response.`
                     timestamp: new Date(),
                     wordCount: countWords(result.content),
                     stageType: 'adaptive_cod',
-                    reasoning: adaptiveSettings.reasoning,
+                    reasoning: notificationMessage,
                     wordLimit: adaptiveSettings.wordLimit,
                     durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
                     totalTokens: result.usage?.total_tokens
