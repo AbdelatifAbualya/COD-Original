@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -107,41 +108,8 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    
-    .cod-steps {
-      animation: fadeIn 0.4s ease;
-    }
-    
-    .cod-step {
-      animation: slideInLeft 0.3s ease;
-    }
-    
-    .reflection-block {
-      animation: slideInRight 0.5s ease;
-    }
-    
-    .verification-block {
-      animation: fadeIn 0.6s ease;
-    }
-    
-    /* Stage indicator with enhanced animation */
-    @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); }
-      70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
-    }
-    
-    .stage-indicator {
-      animation: pulse 2s infinite;
+    .cod-step, .problem-analysis, .reflection-block, .final-answer {
+        animation: fadeIn 0.5s ease-out;
     }
     
     /* Streaming Indicator Animation */
@@ -241,7 +209,7 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-lg font-bold text-white">Enhanced CoD Studio</h2>
+            <h2 class="text-lg font-bold text-white">CoD Studio</h2>
             <p class="text-xs text-deepseek-300">DeepSeek V3-0324</p>
           </div>
         </div>
@@ -385,7 +353,7 @@
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
       <header class="bg-dark-700 border-b border-dark-600 h-16 flex items-center justify-between px-4 md:px-6">
-        <h1 id="pageTitle" class="text-xl font-semibold">Enhanced CoD Studio - DeepSeek V3-0324</h1>
+        <h1 id="pageTitle" class="text-xl font-semibold">CoD Studio - DeepSeek V3-0324</h1>
         <div class="flex items-center gap-3">
           <div id="currentModelDisplay" class="bg-dark-600 text-sm px-3 py-1.5 rounded-lg flex items-center gap-2">
             <div class="w-2 h-2 bg-deepseek-400 rounded-full animate-pulse"></div>
@@ -425,7 +393,7 @@
 
         <div class="flex items-start gap-3 rounded-xl bg-dark-600 p-3 shadow-lg border border-dark-500 focus-within:border-deepseek-500 transition">
           <div class="flex-1">
-            <textarea id="userInput" rows="1" class="w-full bg-dark-700 text-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-deepseek-500 resize-none text-base" placeholder="Ask a complex research question for enhanced CoD reasoning with DeepSeek V3-0324..."></textarea>
+            <textarea id="userInput" rows="1" class="w-full bg-dark-700 text-gray-100 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-deepseek-500 resize-none text-base" placeholder="Ask a complex research question for CoD reasoning with DeepSeek V3-0324..."></textarea>
           </div>
           <div class="flex flex-col gap-2 mt-1">
             <button id="sendBtn" class="deepseek-gradient hover:from-deepseek-600 hover:to-deepseek-700 text-white p-3 rounded-lg transition deepseek-glow">
@@ -459,7 +427,7 @@
   <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
     <div class="bg-dark-700 rounded-xl shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
       <div class="p-5 border-b border-dark-600 flex justify-between items-center">
-        <h2 class="text-xl font-semibold">Enhanced AI Configuration - DeepSeek V3-0324</h2>
+        <h2 class="text-xl font-semibold">AI Configuration - DeepSeek V3-0324</h2>
         <button id="closeModalX" class="text-gray-400 hover:text-white">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -526,7 +494,7 @@
         
         <!-- CoD Settings Tab -->
         <div id="codTab" class="tab-content hidden">
-          <h3 class="text-lg font-medium mb-4 pb-2 border-b border-dark-600">Enhanced Chain of Draft Configuration</h3>
+          <h3 class="text-lg font-medium mb-4 pb-2 border-b border-dark-600">Chain of Draft Configuration</h3>
           
           <!-- Reasoning Method Selection -->
           <div class="bg-dark-600 border border-dark-500 rounded-lg p-4 mb-5">
@@ -543,22 +511,10 @@
               <div class="flex items-start">
                 <input type="radio" id="enhancedCoD" name="reasoningMethod" value="enhanced_cod" checked class="w-4 h-4 mt-1 text-deepseek-500 bg-dark-500 border-dark-400 focus:ring-deepseek-500 focus:ring-offset-dark-700">
                 <label for="enhancedCoD" class="ml-3 block text-sm font-medium text-white">
-                  Enhanced Chain of Draft with Dual-Stage Verification
-                  <div class="text-gray-400 text-xs mt-1">Advanced CoD with two-stage API calls: Draft + Reflection → Final Verification & Answer</div>
+                  Adaptive Chain of Draft
+                  <div class="text-gray-400 text-xs mt-1">Applies CoD methodology. Reasoning depth and word limits are adjusted automatically based on query complexity.</div>
                 </label>
               </div>
-            </div>
-          </div>
-          
-          <!-- Adaptive Reasoning Section -->
-          <div class="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg p-4 mb-5">
-            <h4 class="text-sm font-medium text-purple-300 mb-3 flex items-center gap-2">
-              <span>🧠</span>
-              Adaptive Complexity Detection
-              <span class="bg-purple-600/20 text-purple-300 text-xs px-2 py-1 rounded-full">ALWAYS ACTIVE</span>
-            </h4>
-            <div class="text-purple-200 text-xs mt-1">
-              This studio automatically adjusts reasoning depth and CoD word limits based on an analysis of the user's query. This ensures optimal performance for varying levels of complexity.
             </div>
           </div>
         </div>
@@ -641,9 +597,8 @@
       currentModel: "accounts/fireworks/models/deepseek-v3-0324",
       isVisionModel: false, // DeepSeek V3-0324 doesn't have vision capabilities
       
-      // Enhanced Reasoning Configuration
+      // Reasoning Configuration
       reasoningMethod: "enhanced_cod", // "standard" or "enhanced_cod"
-      reasoningEnhancement: "adaptive", // This is now fixed and non-configurable
       
       // Generation Parameters (DeepSeek V3-0324 optimized)
       temperature: 0.3, // DeepSeek's optimal temperature
@@ -654,185 +609,106 @@
     };
 
     /*====================================
-     * ENHANCED PROMPTS FOR DEEPSEEK V3-0324
+     * PROMPTS FOR DEEPSEEK V3-0324
      ===================================*/
     const ENHANCED_PROMPTS = {
-      // Stage 1: Analysis + Initial CoD
-      stage1_analysis_cod: (wordLimit) => `You are DeepSeek V3-0324, an advanced reasoning model. This is STAGE 1 of a two-stage enhanced reasoning process.
+        // Adaptive Chain of Draft (Single Stage)
+        adaptive_cod: (wordLimit) => `You are DeepSeek V3-0324, an advanced reasoning model. Your task is to solve the user's problem using the Adaptive Chain of Draft (CoD) methodology in a single, comprehensive response.
 
 CRITICAL INSTRUCTIONS:
-1. First, analyze the problem complexity and structure
-2. Then apply Chain of Draft (CoD) methodology with EXACTLY ${wordLimit} words per step
-3. Provide initial reflection on your reasoning
-4. End with a draft solution
+1.  **Problem Analysis:** First, thoroughly analyze the problem's complexity, identify its key components, and determine a logical solution path.
+2.  **Chain of Draft (CoD):** Generate a series of reasoning steps (drafts). Each step must be concise, with a strict maximum of **${wordLimit} words**.
+3.  **Initial Reflection:** After the CoD steps, reflect on the quality of your reasoning. Identify any potential issues, gaps, or assumptions made.
+4.  **Final Answer:** Based on your analysis and CoD, provide a final, comprehensive, and well-reasoned solution.
 
-FORMAT:
+Your entire response MUST follow this exact format:
+
 #### PROBLEM ANALYSIS
-[Analyze complexity, identify key components, determine approach]
+[Your detailed analysis of the problem]
 
 #### CHAIN OF DRAFT STEPS
-CoD Step 1: [${wordLimit} words maximum]
-CoD Step 2: [${wordLimit} words maximum]
-CoD Step 3: [${wordLimit} words maximum]
-[Continue as needed...]
+CoD Step 1: [Your reasoning step, max ${wordLimit} words]
+CoD Step 2: [Your reasoning step, max ${wordLimit} words]
+CoD Step 3: [Your reasoning step, max ${wordLimit} words]
+[...continue as needed]
 
 #### INITIAL REFLECTION
-[Reflect on reasoning quality, identify potential issues, assess confidence]
-
-#### DRAFT SOLUTION
-[Provide initial solution based on CoD analysis]
-
-Remember: This is STAGE 1. Be thorough but prepare for STAGE 2 verification.`,
-
-      // Stage 2: Deep Verification + Final Answer
-      stage2_verification: () => `You are DeepSeek V3-0324 in STAGE 2 of enhanced reasoning. You will now perform deep verification and provide the final comprehensive answer.
-
-Your task:
-1. CRITICALLY EXAMINE the Stage 1 analysis and CoD steps
-2. VERIFY each reasoning step for accuracy and logical consistency
-3. CHECK for mathematical errors, logical fallacies, or incomplete reasoning
-4. EXPLORE alternative approaches if needed
-5. ASSESS confidence levels and identify uncertainties
-6. PROVIDE a comprehensive final answer
-
-VERIFICATION CHECKLIST:
-□ Are all CoD steps logically sound?
-□ Are there any mathematical or computational errors?
-□ Are assumptions clearly stated and reasonable?
-□ Have alternative approaches been considered?
-□ Is the reasoning complete and comprehensive?
-□ Are there any gaps or weaknesses in the logic?
-
-FORMAT:
-#### STAGE 2 VERIFICATION
-[Critical analysis of Stage 1 reasoning]
-
-#### ERROR DETECTION & CORRECTION
-[Identify and correct any errors found]
-
-#### ALTERNATIVE APPROACH ANALYSIS
-[Consider alternative solution paths]
-
-#### CONFIDENCE ASSESSMENT
-[Evaluate confidence levels and identify uncertainties]
+[Your reflection on the reasoning process, potential flaws, and confidence]
 
 #### FINAL COMPREHENSIVE ANSWER
-[Definitive, well-reasoned solution with full explanation]
+[Your final, complete, and verified answer]
 
-#### REFLECTION SUMMARY
-[Key insights, lessons learned, and reasoning quality assessment]`
+Execute this process diligently to provide a high-quality, structured response.`,
     };
 
     /*====================================
-     * ADAPTIVE COMPLEXITY DETECTION (Enhanced)
+     * ADAPTIVE COMPLEXITY DETECTION
      ===================================*/
     function analyzeEnhancedComplexity(message) {
       const complexity = {
-        // Basic indicators
         hasMath: /[\d\+\-\*\/\=\(\)\^\%√∫∑∏]/.test(message),
         hasLogic: /\b(if|then|else|because|therefore|since|implies|prove|logic|reasoning|analyze|compare|evaluate|assess)\b/i.test(message),
         multiStep: /\b(first|next|then|after|finally|step|calculate|find|determine|process|stages?|phases?)\b/i.test(message),
-        
-        // Research indicators
         hasResearch: /\b(research|study|investigate|explore|examine|review|analysis|synthesis|comprehensive|methodology)\b/i.test(message),
-        hasScientific: /\b(hypothesis|theory|experiment|data|statistical|scientific|empirical|peer.review|literature)\b/i.test(message),
-        
-        // Technical indicators
         hasCoding: /\b(code|programming|algorithm|function|class|variable|debug|implement|develop|software)\b/i.test(message),
-        hasEngineering: /\b(design|optimization|system|architecture|performance|efficiency|scalability)\b/i.test(message),
-        
-        // Advanced indicators
-        hasPhilosophy: /\b(ethics|moral|philosophical|ontology|epistemology|metaphysics|consciousness)\b/i.test(message),
-        hasEconomics: /\b(economic|financial|market|trade|investment|fiscal|monetary|GDP|inflation)\b/i.test(message),
-        hasMedicine: /\b(medical|clinical|diagnosis|treatment|patient|therapy|pharmaceutical|biological)\b/i.test(message),
-        
-        // Complexity metrics
-        wordCount: countWords(message),
-        sentenceCount: (message.match(/[.!?]+/g) || []).length,
-        questionWords: (message.match(/\b(what|how|why|when|where|which|who)\b/gi) || []).length,
         isLong: message.length > 300,
         hasMultipleQuestions: (message.match(/\?/g) || []).length > 1
       };
 
-      // Enhanced scoring system
       let score = 0;
       if (complexity.hasMath) score += 2;
       if (complexity.hasLogic) score += 1;
       if (complexity.multiStep) score += 1;
       if (complexity.hasResearch) score += 3;
-      if (complexity.hasScientific) score += 2;
       if (complexity.hasCoding) score += 1;
-      if (complexity.hasEngineering) score += 1;
-      if (complexity.hasPhilosophy) score += 2;
-      if (complexity.hasEconomics) score += 1;
-      if (complexity.hasMedicine) score += 2;
       if (complexity.isLong) score += 1;
       if (complexity.hasMultipleQuestions) score += 1;
-      if (complexity.questionWords > 3) score += 1;
-      if (complexity.sentenceCount > 10) score += 1;
 
-      // Determine complexity level with enhanced categories
-      if (score >= 8) {
-        complexity.level = 'research_grade';
-        complexity.recommendedWordLimit = 15;
-        complexity.recommendedVerification = 'research';
-      } else if (score >= 6) {
+      if (score >= 6) {
         complexity.level = 'highly_complex';
-        complexity.recommendedWordLimit = 12;
-        complexity.recommendedVerification = 'deep';
+        complexity.recommendedWordLimit = 15;
       } else if (score >= 4) {
         complexity.level = 'complex';
-        complexity.recommendedWordLimit = 8;
-        complexity.recommendedVerification = 'standard';
+        complexity.recommendedWordLimit = 12;
       } else if (score >= 2) {
         complexity.level = 'moderate';
-        complexity.recommendedWordLimit = 5;
-        complexity.recommendedVerification = 'standard';
+        complexity.recommendedWordLimit = 8;
       } else {
         complexity.level = 'simple';
         complexity.recommendedWordLimit = 5;
-        complexity.recommendedVerification = 'basic';
       }
-
       complexity.score = score;
       return complexity;
     }
 
     function getAdaptiveEnhancedSettings(message) {
-      // Since reasoningEnhancement is fixed to 'adaptive', this function always performs adaptive analysis.
       const complexity = analyzeEnhancedComplexity(message);
       let reasoning = '';
 
       switch (complexity.level) {
-        case 'research_grade':
-          reasoning = 'Research-grade complexity detected - using extensive CoD steps with deep verification';
-          break;
         case 'highly_complex':
-          reasoning = 'Highly complex problem detected - using expanded CoD with comprehensive verification';
+          reasoning = 'Highly complex problem detected - using expanded CoD steps.';
           break;
         case 'complex':
-          reasoning = 'Complex problem detected - using moderate CoD expansion with standard verification';
+          reasoning = 'Complex problem detected - using moderate CoD expansion.';
           break;
         case 'moderate':
-          reasoning = 'Moderate complexity detected - using balanced CoD approach';
+          reasoning = 'Moderate complexity detected - using balanced CoD approach.';
           break;
-        case 'simple':
-          reasoning = 'Simple problem detected - using concise CoD steps';
+        default:
+          reasoning = 'Simple problem detected - using concise CoD steps.';
           break;
       }
 
       return {
-        method: CONFIG.reasoningMethod,
         wordLimit: complexity.recommendedWordLimit,
-        verificationDepth: complexity.recommendedVerification,
         complexity: complexity,
-        adapted: true, // It's always adapting now
         reasoning: reasoning
       };
     }
 
     /***********************
-     * Thread Management (Enhanced)
+     * Thread Management
      ***********************/
     let threads = [];
     let currentThreadId = null;
@@ -843,7 +719,6 @@ FORMAT:
         id: Date.now(),
         name: `Research Session ${threadCounter++}`,
         messages: [],
-        reasoning_sessions: [],
         metadata: {
           created: new Date().toISOString(),
           model: CONFIG.currentModel,
@@ -894,7 +769,6 @@ FORMAT:
         });
       }
       
-      // Update mobile thread list
       const mobileThreadList = document.getElementById("mobileThreadList");
       if (mobileThreadList) {
         mobileThreadList.innerHTML = "";
@@ -918,7 +792,6 @@ FORMAT:
         });
       }
       
-      // Update thread count
       const threadCountEl = document.getElementById("threadCount");
       if (threadCountEl) {
         threadCountEl.textContent = threads.length;
@@ -942,317 +815,82 @@ FORMAT:
     }
 
     /***********************
-     * Enhanced Message Rendering
+     * Message Rendering and Formatting
      ***********************/
-    function formatEnhancedProblemAnalysis(content) {
-      if (!content) return '';
-      
-      let html = '<div class="problem-analysis bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-4">';
-      html += '<div class="text-blue-300 font-semibold mb-2 flex items-center gap-2">';
-      html += '<span>📊</span><span>Problem Analysis</span>';
-      html += '<span class="bg-blue-600/20 text-blue-300 text-xs px-2 py-1 rounded-full ml-auto">STAGE 1</span>';
-      html += '</div>';
-      html += '<div class="text-blue-100 text-sm">' + transformMessage(content) + '</div>';
-      html += '</div>';
-      
-      return html;
-    }
-    
-    function formatEnhancedCoDStage(content, wordLimit, stageNum = 1) {
-      if (!content) return '';
-      
-      let html = '';
-      const sections = content.split('####');
-      
-      // CoD Steps
-      if (sections.length > 0) {
-        const codSteps = sections[0].trim();
-        if (codSteps) {
-          html += '<div class="cod-steps bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">';
-          html += `<div class="text-green-300 font-semibold mb-3 flex items-center gap-2">
-                     <span>⚡</span>
-                     <span>Enhanced Chain of Draft (${wordLimit} words max)</span>
-                     <span class="bg-green-600/20 text-green-300 text-xs px-2 py-1 rounded-full ml-auto">STAGE ${stageNum}</span>
-                   </div>`;
-          
-          const steps = codSteps.split('\n').filter(line => line.trim());
-          let stepCounter = 1;
-          
-          steps.forEach(step => {
-            if (step.trim().toLowerCase().startsWith('cod step') || step.trim().match(/^\d+\./)) {
-              const stepContent = step.replace(/^(cod step \d+:|^\d+\.)/i, '').trim();
-              const wordCount = countWords(stepContent);
-              const isWithinLimit = wordCount <= wordLimit;
-              
-              html += `<div class="flex items-start mb-3 cod-step">
-                         <span class="flex items-center justify-center min-w-8 h-8 mr-3 rounded-full ${isWithinLimit ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'} text-sm font-bold">${stepCounter++}</span>
-                         <div class="flex-1">
-                           <span class="text-green-100 font-mono text-sm">${stepContent}</span>
-                           <div class="text-xs ${isWithinLimit ? 'text-green-400' : 'text-yellow-400'} mt-1">${wordCount}/${wordLimit} words</div>
-                         </div>
-                       </div>`;
-            }
-          });
-          
-          html += '</div>';
+    function formatAdaptiveCoDResponse(content, wordLimit) {
+        if (!content) return '';
+
+        let html = '';
+        const sections = content.split(/####\s*PROBLEM ANALYSIS|####\s*CHAIN OF DRAFT STEPS|####\s*INITIAL REFLECTION|####\s*FINAL COMPREHENSIVE ANSWER/i).filter(s => s.trim() !== '');
+        
+        // Fallback for when the model doesn't follow the format perfectly
+        if (sections.length < 4) {
+            return transformMessage(content);
         }
-      }
-      
-      // Initial Reflection
-      if (sections.length > 1) {
-        const reflection = sections[1].replace(/INITIAL REFLECTION/i, '').trim();
-        if (reflection) {
-          html += '<div class="reflection-block bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 mb-4">';
-          html += '<div class="text-purple-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>🤔</span><span>Initial Reflection</span>';
-          html += '</div>';
-          html += '<div class="text-purple-100 text-sm">' + transformMessage(reflection) + '</div>';
-          html += '</div>';
+
+        const [problemAnalysis, codStepsRaw, reflection, finalAnswer] = sections;
+
+        // 1. Problem Analysis
+        if (problemAnalysis && problemAnalysis.trim()) {
+            html += `<div class="problem-analysis bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-4">
+                        <div class="text-blue-300 font-semibold mb-2 flex items-center gap-2">
+                        <span>📊</span><span>Problem Analysis</span>
+                        </div>
+                        <div class="text-blue-100 text-sm">${transformMessage(problemAnalysis.trim())}</div>
+                    </div>`;
         }
-      }
-      
-      // Draft Solution
-      if (sections.length > 2) {
-        const solution = sections[2].replace(/DRAFT SOLUTION/i, '').trim();
-        if (solution) {
-          html += '<div class="draft-solution bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">';
-          html += '<div class="text-orange-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>💡</span><span>Draft Solution</span>';
-          html += '</div>';
-          html += '<div class="text-orange-100 text-sm">' + transformMessage(solution) + '</div>';
-          html += '</div>';
+
+        // 2. CoD Steps
+        if (codStepsRaw && codStepsRaw.trim()) {
+            html += `<div class="cod-steps bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
+                        <div class="text-green-300 font-semibold mb-3 flex items-center gap-2">
+                            <span>⚡</span>
+                            <span>Chain of Draft Steps (${wordLimit} words max)</span>
+                        </div>`;
+            const steps = codStepsRaw.trim().split('\n').filter(line => line.trim().toLowerCase().startsWith('cod step'));
+            let stepCounter = 1;
+            steps.forEach(step => {
+                const stepContent = step.replace(/^cod step \d+:/i, '').trim();
+                const wordCount = countWords(stepContent);
+                const isWithinLimit = wordCount <= wordLimit;
+                
+                html += `<div class="flex items-start mb-3 cod-step">
+                            <span class="flex items-center justify-center min-w-[2rem] h-8 mr-3 rounded-full ${isWithinLimit ? 'bg-green-700 text-green-100' : 'bg-yellow-700 text-yellow-100'} text-sm font-bold">${stepCounter++}</span>
+                            <div class="flex-1">
+                                <span class="text-green-100 font-mono text-sm">${stepContent}</span>
+                                <div class="text-xs ${isWithinLimit ? 'text-green-400' : 'text-yellow-400'} mt-1">${wordCount}/${wordLimit} words</div>
+                            </div>
+                        </div>`;
+            });
+            html += '</div>';
         }
-      }
-      
-      return html;
-    }
-    
-    function formatEnhancedVerification(content) {
-      if (!content) return '';
-      
-      let html = '';
-      const sections = content.split('####');
-      
-      // Stage 2 Verification
-      if (sections.length > 1) {
-        const verification = sections[1].replace(/STAGE 2 VERIFICATION/i, '').trim();
-        if (verification) {
-          html += '<div class="verification-block bg-indigo-900/20 border border-indigo-500/30 rounded-lg p-4 mb-4">';
-          html += '<div class="text-indigo-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>🔍</span><span>Stage 2 Verification</span>';
-          html += '<span class="bg-indigo-600/20 text-indigo-300 text-xs px-2 py-1 rounded-full ml-auto">STAGE 2</span>';
-          html += '</div>';
-          html += '<div class="text-indigo-100 text-sm">' + transformMessage(verification) + '</div>';
-          html += '</div>';
+
+        // 3. Initial Reflection
+        if (reflection && reflection.trim()) {
+            html += `<div class="reflection-block bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 mb-4">
+                        <div class="text-purple-300 font-semibold mb-3 flex items-center gap-2">
+                        <span>🤔</span><span>Initial Reflection</span>
+                        </div>
+                        <div class="text-purple-100 text-sm">${transformMessage(reflection.trim())}</div>
+                    </div>`;
         }
-      }
-      
-      // Error Detection
-      if (sections.length > 2) {
-        const errorDetection = sections[2].replace(/ERROR DETECTION & CORRECTION/i, '').trim();
-        if (errorDetection) {
-          html += '<div class="error-detection bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-4">';
-          html += '<div class="text-red-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>🐛</span><span>Error Detection & Correction</span>';
-          html += '</div>';
-          html += '<div class="text-red-100 text-sm">' + transformMessage(errorDetection) + '</div>';
-          html += '</div>';
+
+        // 4. Final Comprehensive Answer
+        if (finalAnswer && finalAnswer.trim()) {
+            html += `<div class="final-answer bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4">
+                        <div class="text-emerald-300 font-semibold mb-3 flex items-center gap-2">
+                        <span>✅</span><span>Final Comprehensive Answer</span>
+                        </div>
+                        <div class="text-emerald-100">${transformMessage(finalAnswer.trim())}</div>
+                    </div>`;
         }
-      }
-      
-      // Alternative Approach Analysis
-      if (sections.length > 3) {
-        const alternative = sections[3].replace(/ALTERNATIVE APPROACH ANALYSIS/i, '').trim();
-        if (alternative) {
-          html += '<div class="alternative-analysis bg-teal-900/20 border border-teal-500/30 rounded-lg p-4 mb-4">';
-          html += '<div class="text-teal-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>🔄</span><span>Alternative Approach Analysis</span>';
-          html += '</div>';
-          html += '<div class="text-teal-100 text-sm">' + transformMessage(alternative) + '</div>';
-          html += '</div>';
-        }
-      }
-      
-      // Confidence Assessment
-      if (sections.length > 4) {
-        const confidence = sections[4].replace(/CONFIDENCE ASSESSMENT/i, '').trim();
-        if (confidence) {
-          html += '<div class="confidence-assessment bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-4">';
-          html += '<div class="text-yellow-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>📊</span><span>Confidence Assessment</span>';
-          html += '</div>';
-          html += '<div class="text-yellow-100 text-sm">' + transformMessage(confidence) + '</div>';
-          html += '</div>';
-        }
-      }
-      
-      // Final Comprehensive Answer
-      if (sections.length > 5) {
-        const answer = sections[5].replace(/FINAL COMPREHENSIVE ANSWER/i, '').trim();
-        if (answer) {
-          html += '<div class="final-answer bg-emerald-900/20 border border-emerald-500/30 rounded-lg p-4 mb-4">';
-          html += '<div class="text-emerald-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>✅</span><span>Final Comprehensive Answer</span>';
-          html += '<span class="bg-emerald-600/20 text-emerald-300 text-xs px-2 py-1 rounded-full ml-auto">VERIFIED</span>';
-          html += '</div>';
-          html += '<div class="text-emerald-100">' + transformMessage(answer) + '</div>';
-          html += '</div>';
-        }
-      }
-      
-      // Reflection Summary
-      if (sections.length > 6) {
-        const reflectionSummary = sections[6].replace(/REFLECTION SUMMARY/i, '').trim();
-        if (reflectionSummary) {
-          html += '<div class="reflection-summary bg-gray-900/20 border border-gray-500/30 rounded-lg p-4">';
-          html += '<div class="text-gray-300 font-semibold mb-3 flex items-center gap-2">';
-          html += '<span>📝</span><span>Reflection Summary</span>';
-          html += '</div>';
-          html += '<div class="text-gray-100 text-sm">' + transformMessage(reflectionSummary) + '</div>';
-          html += '</div>';
-        }
-      }
-      
-      return html;
+
+        return html;
     }
 
     /***********************
-     * Enhanced API Communication
+     * API Communication
      ***********************/
-    async function sendEnhancedCoDMessage(message) {
-      // Get adaptive settings
-      const adaptiveSettings = getAdaptiveEnhancedSettings(message);
-      
-      addMessageToCurrentThread(
-        message, 
-        "user", 
-        false, 
-        attachedFiles.map(f => ({name: f.name, type: f.type, size: f.size})),
-        attachedImages.map(img => ({name: img.name, type: img.type, size: img.size}))
-      );
-      
-      const imagesToSend = [...attachedImages];
-      attachedFiles = [];
-      attachedImages = [];
-      clearAttachedFiles();
-      
-      const thread = threads.find(t => t.id === currentThreadId);
-      const startTime = performance.now();
-      
-      showProgress(true, 0);
-      
-      // Show adaptive notification
-      if (adaptiveSettings.reasoning) {
-        showNotification(adaptiveSettings.reasoning, 4000);
-      }
-      
-      try {
-        // STAGE 1: Analysis + Initial CoD
-        addMessageToCurrentThread("🔍 Stage 1: Analyzing problem and applying Chain of Draft methodology...", "bot", true);
-        showProgress(true, 25);
-        
-        let placeholderIndex = thread.messages.length - 1;
-        
-        // Build Stage 1 messages
-        let stage1Messages = [
-          { 
-            role: "system", 
-            content: ENHANCED_PROMPTS.stage1_analysis_cod(adaptiveSettings.wordLimit)
-          },
-          { 
-            role: "user", 
-            content: `Please analyze and solve this problem using enhanced Chain of Draft methodology:\n\n${message}` 
-          }
-        ];
-        
-        // Add images if available (only for stage 1)
-        if (CONFIG.isVisionModel && imagesToSend.length > 0) {
-          stage1Messages = await buildMessagesWithImages(stage1Messages, imagesToSend);
-        }
-        
-        const stage1Result = await callDeepSeekAPI(stage1Messages);
-        const stage1EndTime = performance.now();
-        
-        thread.messages[placeholderIndex] = {
-          content: stage1Result.content,
-          sender: "bot",
-          isPlaceholder: false,
-          timestamp: new Date(),
-          wordCount: countWords(stage1Result.content),
-          stageType: 'enhanced_cod_stage1',
-          stageInfo: "Stage 1: Analysis + Chain of Draft",
-          reasoning: adaptiveSettings.reasoning,
-          wordLimit: adaptiveSettings.wordLimit,
-          durationSeconds: ((stage1EndTime - startTime) / 1000).toFixed(2),
-          totalTokens: stage1Result.usage?.total_tokens
-        };
-        
-        renderCurrentThreadMessages();
-        showProgress(true, 50);
-        
-        // Brief pause between stages
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // STAGE 2: Deep Verification + Final Answer
-        addMessageToCurrentThread("🔬 Stage 2: Deep verification and comprehensive analysis...", "bot", true);
-        showProgress(true, 75);
-        
-        placeholderIndex = thread.messages.length - 1;
-        
-        // Build Stage 2 messages with Stage 1 context
-        const stage2Messages = [
-          { 
-            role: "system", 
-            content: ENHANCED_PROMPTS.stage2_verification()
-          },
-          { 
-            role: "user", 
-            content: `Original Problem: ${message}\n\nSTAGE 1 ANALYSIS AND COD RESULTS:\n${stage1Result.content}\n\nPlease perform Stage 2 verification and provide the final comprehensive answer.` 
-          }
-        ];
-        
-        const stage2Result = await callDeepSeekAPI(stage2Messages);
-        const endTime = performance.now();
-        
-        thread.messages[placeholderIndex] = {
-          content: stage2Result.content,
-          sender: "bot",
-          isPlaceholder: false,
-          timestamp: new Date(),
-          wordCount: countWords(stage2Result.content),
-          stageType: 'enhanced_verification',
-          stageInfo: "Stage 2: Verification + Final Answer",
-          durationSeconds: ((endTime - stage1EndTime) / 1000).toFixed(2),
-          totalTokens: stage2Result.usage?.total_tokens,
-          totalProcessingTime: ((endTime - startTime) / 1000).toFixed(2)
-        };
-        
-        renderCurrentThreadMessages();
-        showProgress(true, 100);
-        
-        setTimeout(() => {
-          showProgress(false);
-        }, 1000);
-        
-        showNotification(`Enhanced CoD completed with ${adaptiveSettings.wordLimit} words/step!`);
-        
-      } catch (error) {
-        showProgress(false);
-        console.error("Enhanced CoD error:", error);
-        const placeholderIndex = thread.messages.length - 1;
-        if (placeholderIndex >= 0) {
-          thread.messages[placeholderIndex] = {
-            content: `Error in enhanced CoD processing: ${error.message}`,
-            sender: "bot",
-            isPlaceholder: false,
-            timestamp: new Date(),
-            wordCount: 0
-          };
-          renderCurrentThreadMessages();
-        }
-      }
-    }
-
     async function callDeepSeekAPI(messages) {
       const payload = {
         model: CONFIG.currentModel,
@@ -1261,7 +899,7 @@ FORMAT:
         top_p: CONFIG.topP,
         top_k: CONFIG.topK,
         max_tokens: CONFIG.maxTokens,
-        stream: false // Two-stage processing uses non-streaming for control
+        stream: false // CoD processing uses non-streaming for control
       };
       
       const response = await fetch('/api/chat', {
@@ -1331,13 +969,11 @@ FORMAT:
               msgContent.innerHTML = transformMessage(msg.content); 
               msgContent.innerHTML += `<div class="text-deepseek-400 text-xs mt-2 streaming-indicator">Generating</div>`;
             } else {
-              // Handle different enhanced CoD stage types
-              if (msg.stageType === 'enhanced_cod_stage1') {
-                msgContent.innerHTML = formatEnhancedCoDStage(msg.content, msg.wordLimit || 5, 1);
-              } else if (msg.stageType === 'enhanced_verification') {
-                msgContent.innerHTML = formatEnhancedVerification(msg.content);
+              // Handle different CoD stage types
+              if (msg.stageType === 'adaptive_cod') {
+                  msgContent.innerHTML = formatAdaptiveCoDResponse(msg.content, msg.wordLimit || 5);
               } else {
-                msgContent.innerHTML = transformMessage(msg.content);
+                  msgContent.innerHTML = transformMessage(msg.content);
               }
               
               // Add adaptive reasoning notification
@@ -1347,50 +983,31 @@ FORMAT:
                 adaptiveNotification.innerHTML = `<span class="text-purple-300">🧠 Adaptive:</span> <span class="text-purple-100">${msg.reasoning}</span>`;
                 msgContent.appendChild(adaptiveNotification);
               }
-              
-              // Add stage indicator
-              if (msg.stageInfo) {
-                const stageIndicator = document.createElement("div");
-                stageIndicator.className = "mt-2 px-2 py-1 bg-deepseek-900/20 border border-deepseek-800/30 rounded text-xs text-deepseek-400";
-                stageIndicator.innerHTML = `<span class="stage-indicator">📍</span> ${msg.stageInfo}`;
-                msgContent.appendChild(stageIndicator);
-              }
             }
             
             if (!msg.isPlaceholder && !msg.isStreaming) {
               const statsDiv = document.createElement("div");
               statsDiv.className = "mt-3 pt-2 border-t border-dark-600/50 text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 items-center";
               
-              let statsAdded = false;
               if (msg.wordCount !== undefined) {
                 const wordStat = document.createElement('span');
                 wordStat.innerHTML = `Words: <span class="text-gray-300">${msg.wordCount}</span>`;
                 statsDiv.appendChild(wordStat);
-                statsAdded = true;
               }
 
               if (msg.totalTokens !== undefined) {
                 const tokenStat = document.createElement('span');
                 tokenStat.innerHTML = `Tokens: <span class="text-teal-300 font-medium">${msg.totalTokens}</span>`;
                 statsDiv.appendChild(tokenStat);
-                statsAdded = true;
               }
 
               if (msg.durationSeconds !== undefined) {
                 const timeStat = document.createElement('span');
                 timeStat.innerHTML = `Time: <span class="text-amber-400 font-medium">${msg.durationSeconds}s</span>`;
                 statsDiv.appendChild(timeStat);
-                statsAdded = true;
               }
 
-              if (msg.totalProcessingTime !== undefined) {
-                const totalTimeStat = document.createElement('span');
-                totalTimeStat.innerHTML = `Total: <span class="text-deepseek-400 font-medium">${msg.totalProcessingTime}s</span>`;
-                statsDiv.appendChild(totalTimeStat);
-                statsAdded = true;
-              }
-
-              if (statsAdded) {
+              if (statsDiv.children.length > 0) {
                 msgContent.appendChild(statsDiv);
               }
             }
@@ -1414,7 +1031,7 @@ FORMAT:
       if (CONFIG.reasoningMethod === "standard") {
         return await sendStandardMessage(message);
       } else if (CONFIG.reasoningMethod === "enhanced_cod") {
-        return await sendEnhancedCoDMessage(message);
+        return await sendAdaptiveCoDMessage(message);
       }
     }
 
@@ -1455,6 +1072,91 @@ FORMAT:
         renderCurrentThreadMessages();
       }
     }
+    
+    async function sendAdaptiveCoDMessage(message) {
+        const adaptiveSettings = getAdaptiveEnhancedSettings(message);
+        
+        addMessageToCurrentThread(
+            message, 
+            "user", 
+            false, 
+            attachedFiles.map(f => ({name: f.name, type: f.type, size: f.size})),
+            attachedImages.map(img => ({name: img.name, type: img.type, size: img.size}))
+        );
+        
+        const imagesToSend = [...attachedImages];
+        attachedFiles = [];
+        attachedImages = [];
+        clearAttachedFiles();
+        
+        const thread = threads.find(t => t.id === currentThreadId);
+        const startTime = performance.now();
+
+        if (adaptiveSettings.reasoning) {
+            showNotification(adaptiveSettings.reasoning, 4000);
+        }
+        
+        addMessageToCurrentThread("🧠 Applying Adaptive Chain of Draft...", "bot", true);
+        let placeholderIndex = thread.messages.length - 1;
+        showProgress(true, 50);
+
+        try {
+            let apiMessages = [
+                { 
+                    role: "system", 
+                    content: ENHANCED_PROMPTS.adaptive_cod(adaptiveSettings.wordLimit)
+                },
+                { 
+                    role: "user", 
+                    content: `Please solve this problem using the Adaptive Chain of Draft methodology:\n\n${message}` 
+                }
+            ];
+            
+            if (CONFIG.isVisionModel && imagesToSend.length > 0) {
+                apiMessages = await buildMessagesWithImages(apiMessages, imagesToSend);
+            }
+            
+            const result = await callDeepSeekAPI(apiMessages);
+            const endTime = performance.now();
+            
+            thread.messages[placeholderIndex] = {
+                content: result.content,
+                sender: "bot",
+                isPlaceholder: false,
+                timestamp: new Date(),
+                wordCount: countWords(result.content),
+                stageType: 'adaptive_cod',
+                reasoning: adaptiveSettings.reasoning,
+                wordLimit: adaptiveSettings.wordLimit,
+                durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
+                totalTokens: result.usage?.total_tokens
+            };
+            
+            renderCurrentThreadMessages();
+            showProgress(true, 100);
+            
+            setTimeout(() => {
+                showProgress(false);
+            }, 1000);
+            
+            showNotification(`Adaptive CoD completed!`);
+            
+        } catch (error) {
+            showProgress(false);
+            console.error("Adaptive CoD error:", error);
+            if (placeholderIndex >= 0) {
+                thread.messages[placeholderIndex] = {
+                    content: `Error in Adaptive CoD processing: ${error.message}`,
+                    sender: "bot",
+                    isPlaceholder: false,
+                    timestamp: new Date(),
+                    wordCount: 0
+                };
+                renderCurrentThreadMessages();
+            }
+        }
+    }
+
 
     /***********************
      * Utility Functions
@@ -1728,7 +1430,7 @@ FORMAT:
       localStorage.setItem("enhancedCodConfig", JSON.stringify(CONFIG));
       
       closeSettingsModal(); 
-      showNotification("Enhanced settings saved");
+      showNotification("Settings saved");
     }
 
     /***********************
@@ -1938,10 +1640,9 @@ FORMAT:
         return; 
       }
       
-      let content = `Enhanced Chain of Draft Studio - DeepSeek V3-0324\n`;
+      let content = `CoD Studio - DeepSeek V3-0324\n`;
       content += `Model: ${CONFIG.currentModel}\n`;
       content += `Reasoning: ${CONFIG.reasoningMethod.toUpperCase()}\n`;
-      content += `Adaptive CoD: Enabled\n`;
       content += `Export Date: ${new Date().toLocaleString()}\n\n`;
       content += `${'='.repeat(60)}\n\n`;
       
@@ -1951,9 +1652,6 @@ FORMAT:
         content += `${prefix}:\n${msg.content}\n\n`;
         
         if (msg.sender === 'bot' && !msg.isPlaceholder && !msg.isStreaming) {
-          if (msg.stageInfo) {
-            content += `[${msg.stageInfo}]\n`;
-          }
           if (msg.reasoning) {
             content += `[Adaptive Reasoning: ${msg.reasoning}]\n`;
           }
@@ -1964,10 +1662,7 @@ FORMAT:
             content += `[Tokens: ${msg.totalTokens}]\n`;
           }
           if (msg.durationSeconds !== undefined) {
-            content += `[Stage Time: ${msg.durationSeconds}s]\n`;
-          }
-          if (msg.totalProcessingTime !== undefined) {
-            content += `[Total Time: ${msg.totalProcessingTime}s]\n`;
+            content += `[Time: ${msg.durationSeconds}s]\n`;
           }
           content += "\n";
         }
@@ -1977,7 +1672,7 @@ FORMAT:
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${thread.name}_Enhanced_CoD_DeepSeek.txt`;
+      a.download = `${thread.name}_CoD_DeepSeek.txt`;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
@@ -1985,7 +1680,7 @@ FORMAT:
         document.body.removeChild(a); 
         URL.revokeObjectURL(url); 
       }, 100);
-      showNotification("Enhanced research export downloaded");
+      showNotification("Research export downloaded");
     }
 
     /***********************
