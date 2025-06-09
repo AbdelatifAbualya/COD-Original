@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -118,23 +117,13 @@
       100% { border-right-color: transparent; }
     }
     
-    .streaming {
+    .streaming > div:last-child {
       border-right: 3px solid rgba(14, 165, 233, 0.7);
       animation: typingAnimation 0.8s infinite ease;
+      display: inline-block;
+      padding-right: 2px;
     }
     
-    @keyframes ellipsisAnimation {
-      0% { content: "."; }
-      33% { content: ".."; }
-      66% { content: "..."; }
-      100% { content: "."; }
-    }
-    
-    .streaming-indicator::after {
-      content: "...";
-      animation: ellipsisAnimation 1.5s infinite;
-    }
-
     /* Progress Bar with DeepSeek colors */
     .progress-bar {
       background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
@@ -825,7 +814,7 @@ Execute this process diligently to provide a high-quality, structured response.`
         
         // Fallback for when the model doesn't follow the format perfectly
         if (sections.length < 4) {
-            return transformMessage(content);
+            return `<div>${transformMessage(content)}</div>`;
         }
 
         const [problemAnalysis, codStepsRaw, reflection, finalAnswer] = sections;
@@ -891,6 +880,98 @@ Execute this process diligently to provide a high-quality, structured response.`
     /***********************
      * API Communication
      ***********************/
+    async function streamDeepSeekAPI(messages, placeholderIndex, stageType = null, wordLimit = null, reasoning = null) {
+        const thread = threads.find(t => t.id === currentThreadId);
+        if (!thread) return;
+
+        const startTime = performance.now();
+        let finalContent = "";
+        let finalUsage = {};
+
+        try {
+            const payload = {
+                model: CONFIG.currentModel,
+                messages,
+                temperature: CONFIG.temperature,
+                top_p: CONFIG.topP,
+                top_k: CONFIG.topK,
+                max_tokens: CONFIG.maxTokens,
+                stream: true,
+            };
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok || !response.body) {
+                throw new Error(`API Error: ${response.statusText}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataContent = line.substring(6);
+                        if (dataContent === '[DONE]') break;
+                        
+                        try {
+                            const json = JSON.parse(dataContent);
+                            const delta = json.choices[0]?.delta?.content || '';
+                            finalContent += delta;
+                            
+                            // Update the placeholder message in real-time
+                            thread.messages[placeholderIndex] = {
+                                ...thread.messages[placeholderIndex],
+                                content: finalContent,
+                                isStreaming: true,
+                                isPlaceholder: false,
+                            };
+                            renderCurrentThreadMessages();
+
+                            if (json.usage) {
+                                finalUsage = json.usage;
+                            }
+                        } catch (e) {
+                            console.warn('Could not parse stream chunk:', dataContent, e);
+                        }
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error("Streaming error:", error);
+            thread.messages[placeholderIndex].content = `Error during streaming: ${error.message}`;
+            thread.messages[placeholderIndex].isStreaming = false;
+        } finally {
+            // Finalize the message
+            const endTime = performance.now();
+            thread.messages[placeholderIndex] = {
+                ...thread.messages[placeholderIndex],
+                content: finalContent,
+                isStreaming: false,
+                isPlaceholder: false,
+                wordCount: countWords(finalContent),
+                durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
+                totalTokens: finalUsage.completion_tokens || finalUsage.total_tokens, // Prefer completion, fallback to total
+                stageType: stageType,
+                wordLimit: wordLimit,
+                reasoning: reasoning,
+            };
+            renderCurrentThreadMessages();
+        }
+    }
+
+
     async function callDeepSeekAPI(messages) {
       const payload = {
         model: CONFIG.currentModel,
@@ -899,7 +980,7 @@ Execute this process diligently to provide a high-quality, structured response.`
         top_p: CONFIG.topP,
         top_k: CONFIG.topK,
         max_tokens: CONFIG.maxTokens,
-        stream: false // CoD processing uses non-streaming for control
+        stream: false // This is for non-streaming calls
       };
       
       const response = await fetch('/api/chat', {
@@ -958,31 +1039,28 @@ Execute this process diligently to provide a high-quality, structured response.`
             messageDiv.appendChild(msgContent);
           } else { // Bot message
             messageDiv.className = "flex justify-start";
+            const msgContainer = document.createElement("div");
+            msgContainer.className = "max-w-[90%] bg-dark-700 border border-dark-500 p-4 rounded-2xl rounded-tl-sm shadow-md";
+            if (msg.isStreaming) msgContainer.classList.add("streaming");
+
             const msgContent = document.createElement("div");
-            msgContent.className = "max-w-[90%] bg-dark-700 border border-dark-500 p-4 rounded-2xl rounded-tl-sm shadow-md";
             
             if (msg.isPlaceholder) {
-              msgContent.classList.add("opacity-70");
+              msgContainer.classList.add("opacity-70");
               msgContent.innerHTML = `<div class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-deepseek-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>${msg.content}</div>`;
-            } else if (msg.isStreaming) {
-              msgContent.classList.add("streaming");
-              msgContent.innerHTML = transformMessage(msg.content); 
-              msgContent.innerHTML += `<div class="text-deepseek-400 text-xs mt-2 streaming-indicator">Generating</div>`;
+            } else if (msg.stageType === 'adaptive_cod') {
+                msgContent.innerHTML = formatAdaptiveCoDResponse(msg.content, msg.wordLimit || 5);
             } else {
-              // Handle different CoD stage types
-              if (msg.stageType === 'adaptive_cod') {
-                  msgContent.innerHTML = formatAdaptiveCoDResponse(msg.content, msg.wordLimit || 5);
-              } else {
-                  msgContent.innerHTML = transformMessage(msg.content);
-              }
-              
-              // Add adaptive reasoning notification
-              if (msg.reasoning) {
-                const adaptiveNotification = document.createElement("div");
-                adaptiveNotification.className = "mt-2 px-3 py-2 bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/30 rounded-lg text-xs reflection-indicator";
-                adaptiveNotification.innerHTML = `<span class="text-purple-300">🧠 Adaptive:</span> <span class="text-purple-100">${msg.reasoning}</span>`;
-                msgContent.appendChild(adaptiveNotification);
-              }
+                msgContent.innerHTML = transformMessage(msg.content);
+            }
+            msgContainer.appendChild(msgContent);
+            
+            // Add adaptive reasoning notification after content
+            if (msg.reasoning) {
+              const adaptiveNotification = document.createElement("div");
+              adaptiveNotification.className = "mt-2 px-3 py-2 bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/30 rounded-lg text-xs reflection-indicator";
+              adaptiveNotification.innerHTML = `<span class="text-purple-300">🧠 Adaptive:</span> <span class="text-purple-100">${msg.reasoning}</span>`;
+              msgContainer.appendChild(adaptiveNotification);
             }
             
             if (!msg.isPlaceholder && !msg.isStreaming) {
@@ -1008,10 +1086,10 @@ Execute this process diligently to provide a high-quality, structured response.`
               }
 
               if (statsDiv.children.length > 0) {
-                msgContent.appendChild(statsDiv);
+                msgContainer.appendChild(statsDiv);
               }
             }
-            messageDiv.appendChild(msgContent);
+            messageDiv.appendChild(msgContainer);
           }
           chatMessagesDiv.appendChild(messageDiv);
         });
@@ -1029,129 +1107,105 @@ Execute this process diligently to provide a high-quality, structured response.`
      ***********************/
     async function sendMessage(message) {
       if (CONFIG.reasoningMethod === "standard") {
-        return await sendStandardMessage(message);
+        await sendStandardMessage(message);
       } else if (CONFIG.reasoningMethod === "enhanced_cod") {
-        return await sendAdaptiveCoDMessage(message);
+        await sendAdaptiveCoDMessage(message);
       }
     }
 
     async function sendStandardMessage(message) {
-      addMessageToCurrentThread(message, "user", false, [], []);
-      addMessageToCurrentThread("Thinking...", "bot", true);
-      
+      addMessageToCurrentThread(message, "user");
       const thread = threads.find(t => t.id === currentThreadId);
+      addMessageToCurrentThread("Thinking...", "bot", true);
       const placeholderIndex = thread.messages.length - 1;
-      const startTime = performance.now();
-      
-      try {
-        const messages = [{ role: "user", content: message }];
-        const response = await callDeepSeekAPI(messages);
-        const endTime = performance.now();
-        
-        thread.messages[placeholderIndex] = {
-          content: response.content,
-          sender: "bot",
-          isPlaceholder: false,
-          timestamp: new Date(),
-          wordCount: countWords(response.content),
-          durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
-          totalTokens: response.usage?.total_tokens
-        };
-        
-        renderCurrentThreadMessages();
-        
-      } catch (error) {
-        console.error("Error sending standard message:", error);
-        thread.messages[placeholderIndex] = {
-          content: `Error: ${error.message}`,
-          sender: "bot",
-          isPlaceholder: false,
-          timestamp: new Date(),
-          wordCount: 0
-        };
-        renderCurrentThreadMessages();
+
+      const messages = [{ role: "user", content: message }];
+
+      if (CONFIG.enableStreaming) {
+        await streamDeepSeekAPI(messages, placeholderIndex);
+      } else {
+        const startTime = performance.now();
+        try {
+            const response = await callDeepSeekAPI(messages);
+            const endTime = performance.now();
+            thread.messages[placeholderIndex] = {
+                content: response.content,
+                sender: "bot",
+                isPlaceholder: false,
+                timestamp: new Date(),
+                wordCount: countWords(response.content),
+                durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
+                totalTokens: response.usage?.total_tokens
+            };
+        } catch (error) {
+            console.error("Error sending standard message:", error);
+            thread.messages[placeholderIndex] = {
+                content: `Error: ${error.message}`,
+                sender: "bot",
+                isPlaceholder: false,
+                timestamp: new Date()
+            };
+        } finally {
+            renderCurrentThreadMessages();
+        }
       }
     }
     
     async function sendAdaptiveCoDMessage(message) {
-        const adaptiveSettings = getAdaptiveEnhancedSettings(message);
-        
-        addMessageToCurrentThread(
-            message, 
-            "user", 
-            false, 
-            attachedFiles.map(f => ({name: f.name, type: f.type, size: f.size})),
-            attachedImages.map(img => ({name: img.name, type: img.type, size: img.size}))
-        );
-        
-        const imagesToSend = [...attachedImages];
-        attachedFiles = [];
-        attachedImages = [];
-        clearAttachedFiles();
-        
+        addMessageToCurrentThread(message, "user");
         const thread = threads.find(t => t.id === currentThreadId);
-        const startTime = performance.now();
 
+        const adaptiveSettings = getAdaptiveEnhancedSettings(message);
         if (adaptiveSettings.reasoning) {
             showNotification(adaptiveSettings.reasoning, 4000);
         }
         
         addMessageToCurrentThread("🧠 Applying Adaptive Chain of Draft...", "bot", true);
-        let placeholderIndex = thread.messages.length - 1;
-        showProgress(true, 50);
+        const placeholderIndex = thread.messages.length - 1;
 
-        try {
-            let apiMessages = [
-                { 
-                    role: "system", 
-                    content: ENHANCED_PROMPTS.adaptive_cod(adaptiveSettings.wordLimit)
-                },
-                { 
-                    role: "user", 
-                    content: `Please solve this problem using the Adaptive Chain of Draft methodology:\n\n${message}` 
-                }
-            ];
-            
-            if (CONFIG.isVisionModel && imagesToSend.length > 0) {
-                apiMessages = await buildMessagesWithImages(apiMessages, imagesToSend);
+        let apiMessages = [
+            { 
+                role: "system", 
+                content: ENHANCED_PROMPTS.adaptive_cod(adaptiveSettings.wordLimit)
+            },
+            { 
+                role: "user", 
+                content: `Please solve this problem using the Adaptive Chain of Draft methodology:\n\n${message}` 
             }
-            
-            const result = await callDeepSeekAPI(apiMessages);
-            const endTime = performance.now();
-            
-            thread.messages[placeholderIndex] = {
-                content: result.content,
-                sender: "bot",
-                isPlaceholder: false,
-                timestamp: new Date(),
-                wordCount: countWords(result.content),
-                stageType: 'adaptive_cod',
-                reasoning: adaptiveSettings.reasoning,
-                wordLimit: adaptiveSettings.wordLimit,
-                durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
-                totalTokens: result.usage?.total_tokens
-            };
-            
-            renderCurrentThreadMessages();
-            showProgress(true, 100);
-            
-            setTimeout(() => {
-                showProgress(false);
-            }, 1000);
-            
-            showNotification(`Adaptive CoD completed!`);
-            
-        } catch (error) {
-            showProgress(false);
-            console.error("Adaptive CoD error:", error);
-            if (placeholderIndex >= 0) {
+        ];
+
+        if (CONFIG.enableStreaming) {
+            await streamDeepSeekAPI(apiMessages, placeholderIndex, 'adaptive_cod', adaptiveSettings.wordLimit, adaptiveSettings.reasoning);
+        } else {
+            showProgress(true, 50);
+            const startTime = performance.now();
+            try {
+                const result = await callDeepSeekAPI(apiMessages);
+                const endTime = performance.now();
+                
+                thread.messages[placeholderIndex] = {
+                    content: result.content,
+                    sender: "bot",
+                    isPlaceholder: false,
+                    timestamp: new Date(),
+                    wordCount: countWords(result.content),
+                    stageType: 'adaptive_cod',
+                    reasoning: adaptiveSettings.reasoning,
+                    wordLimit: adaptiveSettings.wordLimit,
+                    durationSeconds: ((endTime - startTime) / 1000).toFixed(2),
+                    totalTokens: result.usage?.total_tokens
+                };
+                
+            } catch (error) {
+                console.error("Adaptive CoD error:", error);
                 thread.messages[placeholderIndex] = {
                     content: `Error in Adaptive CoD processing: ${error.message}`,
                     sender: "bot",
                     isPlaceholder: false,
-                    timestamp: new Date(),
-                    wordCount: 0
+                    timestamp: new Date()
                 };
+            } finally {
+                showProgress(false);
                 renderCurrentThreadMessages();
             }
         }
@@ -1173,7 +1227,9 @@ Execute this process diligently to provide a high-quality, structured response.`
       
       if (typeof marked !== 'undefined') {
         try {
-          return marked.parse(content);
+          // Add a newline before list items if not present, to fix parsing issues
+          let sanitizedContent = content.replace(/(\n|^)(?=[-*] |\d+\. )/g, '$1\n');
+          return marked.parse(sanitizedContent);
         } catch (e) {
           console.warn('Marked.js error:', e);
           return content.replace(/\n/g, '<br>');
